@@ -42,15 +42,13 @@ def roll_modifier(regexp: Union[str, Iterable[str]]):
             cls: 返回修饰后的cls
         """
         assert issubclass(cls, RollExpModifier)
-        if type(regexp) is str:
-            symbols = [regexp]
-        else:
-            symbols = regexp
+        symbols = [regexp] if type(regexp) is str else regexp
         for s in symbols:
             assert " " not in s and s.isupper()
             assert s not in ROLL_MODIFIERS_DICT.keys()
             ROLL_MODIFIERS_DICT[s] = cls
         return cls
+
     return inner
 
 
@@ -66,24 +64,16 @@ class REModReroll(RollExpModifier):
     def __init__(self, args: str):
         super().__init__(args)
         # 模式
-        if args[1] == "O":
-            mod, args = args[:2], args[2:]
-        else:
-            mod, args = args[0], args[1:]
-
+        mod, args = (args[:2], args[2:]) if args[1] == "O" else (args[0], args[1:])
         # 判定条件
-        if args[0] in ("<", ">", "="):
-            comp, rhs = args[0], args[1:]
-        else:
-            comp, rhs = "=", args
-
-        if comp == ">":
-            self.op = operator.gt
-        elif comp == "<":
+        comp, rhs = (args[0], args[1:]) if args[0] in ("<", ">", "=") else ("=", args)
+        if comp == "<":
             self.op = operator.lt
         elif comp == "=":
             self.op = operator.eq
 
+        elif comp == ">":
+            self.op = operator.gt
         self.mod: str = mod
         self.comp: str = comp
         self.rhs: int = int(rhs)
@@ -124,8 +114,7 @@ class REModReroll(RollExpModifier):
                     new_val_list.append(roll_a_dice(roll_res.type))
                     new_info_list[index] = f"[{new_info_list[index]}->{new_val_list[-1]}]"
                 elif self.mod == "XO":
-                    new_val_list.append(val)
-                    new_val_list.append(roll_a_dice(roll_res.type))
+                    new_val_list.extend((val, roll_a_dice(roll_res.type)))
                     new_info_list[index] += f"|{new_val_list[-1]}"
                 else:  # "x"
                     new_val_list.append(val)
@@ -156,21 +145,14 @@ class REModMax(RollExpModifier):
     """
     def __init__(self, args: str):
         super().__init__(args)
-        if args[1] == "H":
-            val_str = args[2:]
-        else:
-            val_str = args[1:]
+        val_str = args[2:] if args[1] == "H" else args[1:]
         self.num = int(val_str)
 
     def modify(self, roll_res: RollResult) -> RollResult:
         """
         注意val的顺序会按从低到高的顺序重新排序, 但info里的内容不会
         """
-        if self.num == 1:
-            new_info = "max"
-        else:
-            new_info = f"max{self.num}"
-
+        new_info = "max" if self.num == 1 else f"max{self.num}"
         new_info += "{" + str(roll_res.val_list)[1:-1] + "}"
         # 如果按下面这种写法就可以在嵌套时显示中间结果, 但是会影响到大成功或大失败的判断, 除非增加新的字段
         # if roll_res.type:
@@ -204,10 +186,7 @@ class REModMin(RollExpModifier):
         """
         注意val的顺序会按从低到高的顺序重新排序, 但info里的内容不会
         """
-        if self.num == 1:
-            new_info = "min"
-        else:
-            new_info = f"min{self.num}"
+        new_info = "min" if self.num == 1 else f"min{self.num}"
         new_info += "{" + str(roll_res.val_list)[1:-1] + "}"
         # if roll_res.type:
         #     new_info += "{" + str(roll_res.val_list)[1:-1] + "}"
@@ -236,25 +215,21 @@ class REModCountSuccess(RollExpModifier):
 
         args = args[2:]
         # 判定条件
-        if args[0] in ("<", ">", "="):
-            comp, rhs = args[0], args[1:]
-        else:
-            comp, rhs = "=", args
-
-        if comp == ">":
-            self.op = operator.gt
-        elif comp == "<":
+        comp, rhs = (args[0], args[1:]) if args[0] in ("<", ">", "=") else ("=", args)
+        if comp == "<":
             self.op = operator.lt
         elif comp == "=":
             self.op = operator.eq
 
+        elif comp == ">":
+            self.op = operator.gt
         self.comp: str = comp
         self.rhs: int = int(rhs)
         if self.rhs < DICE_CONSTANT_MIN or self.rhs > DICE_CONSTANT_MAX:
             raise RollDiceError(f"常量大小必须在{DICE_CONSTANT_MIN}至{DICE_CONSTANT_MAX}之间")
 
     def modify(self, roll_res: RollResult) -> RollResult:
-        result = sum([self.op(val, self.rhs) for val in roll_res.val_list])
+        result = sum(self.op(val, self.rhs) for val in roll_res.val_list)
 
         roll_res.info = f"[count{self.comp}{self.rhs}" + "{" + str(roll_res.val_list)[1:-1] + "}" + f"={result}]"
         roll_res.val_list = [result]

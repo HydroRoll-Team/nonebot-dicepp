@@ -32,9 +32,7 @@ class _(DataChunkBase):
 
 
 def get_default_activate_data(default_enable: bool) -> List:
-    activate_data = [default_enable, get_current_date_str()]
-    # 是否开启, 最后更改的时间
-    return activate_data
+    return [default_enable, get_current_date_str()]
 
 
 @custom_user_command(readable_name="激活指令",
@@ -77,7 +75,7 @@ class ActivateCommand(UserCommandBase):
 
         if msg_str.startswith(".bot"):
             arg_str = msg_str[4:].strip()
-            if meta.to_me and meta.group_id and (arg_str == "on" or arg_str == "off"):
+            if meta.to_me and meta.group_id and arg_str in ["on", "off"]:
                 return True, should_pass, arg_str
             if not arg_str:
                 return True, should_pass, "show"

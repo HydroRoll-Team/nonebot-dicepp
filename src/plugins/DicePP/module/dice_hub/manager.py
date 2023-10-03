@@ -39,19 +39,22 @@ SYNC_CONFIRM_TYPE_REQ_CARD = "$req_card"
 
 
 def standardize_sync_info(sync_info_new: Dict) -> Dict:
-    sync_info_std = {
+    return {
         SYNC_KEY_NAME: sync_info_new.get(SYNC_KEY_NAME, "NONE"),
         SYNC_KEY_MASTER: sync_info_new.get(SYNC_KEY_MASTER, "NONE"),
         SYNC_KEY_VERSION: sync_info_new.get(SYNC_KEY_VERSION, "NONE"),
-        SYNC_KEY_FRIEND_TOKEN: sync_info_new.get(SYNC_KEY_FRIEND_TOKEN, ["NONE"]),
-        SYNC_KEY_ONLINE_FIRST: sync_info_new.get(SYNC_KEY_ONLINE_FIRST, get_current_date_str()),
+        SYNC_KEY_FRIEND_TOKEN: sync_info_new.get(
+            SYNC_KEY_FRIEND_TOKEN, ["NONE"]
+        ),
+        SYNC_KEY_ONLINE_FIRST: sync_info_new.get(
+            SYNC_KEY_ONLINE_FIRST, get_current_date_str()
+        ),
         SYNC_KEY_ONLINE_RATE: sync_info_new.get(SYNC_KEY_ONLINE_RATE, 0),
         SYNC_KEY_MSG_TOTAL: sync_info_new.get(SYNC_KEY_MSG_TOTAL, 0),
         SYNC_KEY_MSG_LAST: sync_info_new.get(SYNC_KEY_MSG_LAST, 0),
         SYNC_KEY_CMD_TOTAL: sync_info_new.get(SYNC_KEY_CMD_TOTAL, 0),
         SYNC_KEY_CMD_LAST: sync_info_new.get(SYNC_KEY_CMD_LAST, 0),
     }
-    return sync_info_std
 
 
 class HubManager:
@@ -88,15 +91,14 @@ class HubManager:
             end_time = str_to_datetime(end_time)
             if end_time < current_time - one_week:  # 忽略一周以前的记录
                 continue
-            if start_time < current_time - one_week:  # 只统计一周内的记录
-                start_time = current_time - one_week
+            start_time = max(start_time, current_time - one_week)
             online_time_in_week += (end_time - start_time).total_seconds()
 
         online_rate = int(math.ceil(online_time_in_week / total_time_in_week * 100))
         passwords: List[str] = self.bot.cfg_helper.get_config(CFG_FRIEND_TOKEN)
         passwords = [password.strip() for password in passwords if password.strip()]
         cmd_stats = meta_stat.cmd.flag_dict.values()
-        sync_info = {
+        return {
             SYNC_KEY_NAME: self_name,
             SYNC_KEY_MASTER: self.bot.get_master_ids()[0],
             SYNC_KEY_VERSION: BOT_VERSION,
@@ -105,10 +107,9 @@ class HubManager:
             SYNC_KEY_ONLINE_RATE: online_rate,
             SYNC_KEY_MSG_TOTAL: meta_stat.msg.total_val,
             SYNC_KEY_MSG_LAST: meta_stat.msg.last_day_val,
-            SYNC_KEY_CMD_TOTAL: sum([elem.total_val for elem in cmd_stats]),
-            SYNC_KEY_CMD_LAST: sum([elem.last_day_val for elem in cmd_stats]),
+            SYNC_KEY_CMD_TOTAL: sum(elem.total_val for elem in cmd_stats),
+            SYNC_KEY_CMD_LAST: sum(elem.last_day_val for elem in cmd_stats),
         }
-        return sync_info
 
     def self_validate(self):
         try:
@@ -134,8 +135,7 @@ class HubManager:
         assert master_id, "找不到有效的Master信息"  # Master都没填直接assert掉
 
         info = [self.identifier, self_name, master_id, BOT_VERSION]
-        card = MSG_SEP.join(info)
-        return card
+        return MSG_SEP.join(info)
 
     def record_card(self, card: str):
         """读取对方名片, 失败抛出AssertionError"""
@@ -223,7 +223,7 @@ class HubManager:
         reroute_req_list = []
         remote_dict: Dict[str, str] = json.loads(confirm_msg)
         for rid, update_time in remote_dict.items():
-            if rid == remote_id or rid == self.identifier:
+            if rid in [remote_id, self.identifier]:
                 continue
             if rid not in friend_dict.keys():  # 本地没有储存该远端信息则请求转发
                 reroute_req_list.append(rid)

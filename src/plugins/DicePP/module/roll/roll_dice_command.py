@@ -179,18 +179,17 @@ class RollDiceCommand(UserCommandBase):
             # 尝试扣除点数
             cost_point = int(self.bot.cfg_helper.get_config(CFG_ROLL_EXP_COST)[0])
             res = try_use_point(self.bot, meta.user_id, cost_point)
-            # 点数不足
             if res:
                 return [BotSendMsgCommand(self.bot.account, res, [port])]
-            else:
-                async def roll_exp_task():
-                    exp_result = await get_roll_exp_result(exp)
-                    exp_feedback = self.format_loc(LOC_ROLL_EXP, expression=exp.get_result().get_exp(), expectation=exp_result)
-                    return [BotSendMsgCommand(self.bot.account, exp_feedback, [port])]
-                self.bot.register_task(roll_exp_task, timeout=30, timeout_callback=lambda: [BotSendMsgCommand(self.bot.account, "计算超时!", [port])])
+            async def roll_exp_task():
+                exp_result = await get_roll_exp_result(exp)
+                exp_feedback = self.format_loc(LOC_ROLL_EXP, expression=exp.get_result().get_exp(), expectation=exp_result)
+                return [BotSendMsgCommand(self.bot.account, exp_feedback, [port])]
 
-                feedback = self.format_loc(LOC_ROLL_EXP_START)
-                return [BotSendMsgCommand(self.bot.account, feedback, [port])]
+            self.bot.register_task(roll_exp_task, timeout=30, timeout_callback=lambda: [BotSendMsgCommand(self.bot.account, "计算超时!", [port])])
+
+            feedback = self.format_loc(LOC_ROLL_EXP_START)
+            return [BotSendMsgCommand(self.bot.account, feedback, [port])]
 
         # 得到结果字符串
         if len(res_list) > 1:
@@ -237,16 +236,17 @@ class RollDiceCommand(UserCommandBase):
 
     def get_help(self, keyword: str, meta: MessageMetaData) -> str:
         if keyword == "r":
-            help_str = "掷骰：.r[掷骰表达式]([掷骰原因])\n" \
-                       "[掷骰表达式]：([轮数]#)[个数]d面数(优/劣势)(k[取点数最大的骰子数])不带面数时视为掷一个默认的20面骰\n" \
-                       "r后加h即为暗骰\n" \
-                       "示例:\n" \
-                       ".rd20+1d4+4\n" \
-                       ".r4#d    //投4次d20\n" \
-                       ".rd20劣势+4 //带劣势攻击\n" \
-                       ".r2#d优势+4 攻击被束缚的地精 //两次有加值的优势攻击\n" \
-                       ".r1d12+2d8+5抗性 //得到减半向下取整的投骰总值"
-            return help_str
+            return (
+                "掷骰：.r[掷骰表达式]([掷骰原因])\n"
+                "[掷骰表达式]：([轮数]#)[个数]d面数(优/劣势)(k[取点数最大的骰子数])不带面数时视为掷一个默认的20面骰\n"
+                "r后加h即为暗骰\n"
+                "示例:\n"
+                ".rd20+1d4+4\n"
+                ".r4#d    //投4次d20\n"
+                ".rd20劣势+4 //带劣势攻击\n"
+                ".r2#d优势+4 攻击被束缚的地精 //两次有加值的优势攻击\n"
+                ".r1d12+2d8+5抗性 //得到减半向下取整的投骰总值"
+            )
         return ""
 
     def get_description(self) -> str:
@@ -263,10 +263,8 @@ async def get_roll_exp_result(expression: RollExpression) -> str:
         await asyncio.sleep(0)
     res_list = sorted(res_list)
     mean = sum(res_list)/repeat_times
-    info = []
     stat_range_num: List[int] = [0] + [repeat_times*r//100 for r in stat_range] + [-1]
-    for num in stat_range_num:
-        info.append(res_list[num])
+    info = [res_list[num] for num in stat_range_num]
     feedback = ""
     left_range = 0
     for index, right_range in enumerate(stat_range):
@@ -279,8 +277,10 @@ async def get_roll_exp_result(expression: RollExpression) -> str:
 
 def get_d20_state_loc_text(bot: Bot, res_list: List[RollResult]):
     d20_state: str = ""
-    success_time = sum([res.d20_num == 1 and res.d20_state == 20 for res in res_list])
-    failure_time = sum([res.d20_num == 1 and res.d20_state == 1 for res in res_list])
+    success_time = sum(
+        res.d20_num == 1 and res.d20_state == 20 for res in res_list
+    )
+    failure_time = sum(res.d20_num == 1 and res.d20_state == 1 for res in res_list)
     if len(res_list) == 1 and (success_time + failure_time) != 0:  # 掷骰轮数等于1且存在大成功或大失败
         if success_time:
             d20_state = bot.loc_helper.format_loc_text(LOC_ROLL_D20_BS)

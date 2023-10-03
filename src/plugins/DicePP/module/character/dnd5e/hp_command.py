@@ -127,7 +127,7 @@ class HPCommand(UserCommandBase):
             cmd_index: int = min(cmd_index_eq, cmd_index_add, cmd_index_sub, cmd_index_space)
             if cmd_index == max_len:  # 都没有找到
                 cmd_index = -1
-            elif cmd_index == cmd_index_eq or cmd_index == cmd_index_space:
+            elif cmd_index in [cmd_index_eq, cmd_index_space]:
                 cmd_type = "="
             elif cmd_index == cmd_index_add:
                 cmd_type = "+"
@@ -151,11 +151,9 @@ class HPCommand(UserCommandBase):
                         if source_key == "multiple":
                             target_poss = target_id.split("/")
                             feedback = self.format_loc(LOC_HP_INFO_MULTI, name_list=target_poss)
-                            return [BotSendMsgCommand(self.bot.account, feedback, [port])]
                         else:  # not source_key
                             feedback = self.format_loc(LOC_HP_INFO_MISS, name=target_intent)
-                            return [BotSendMsgCommand(self.bot.account, feedback, [port])]
-
+                        return [BotSendMsgCommand(self.bot.account, feedback, [port])]
             if not target_list:
                 target_list = [(DC_CHAR_DND, [meta.group_id, meta.user_id])]  # 默认目标是自己的角色卡信息
             # 计算调整值
@@ -313,16 +311,10 @@ class HPCommand(UserCommandBase):
             for key, value in target_id_name_dict.items():
                 if value == target_poss[0]:
                     if not target_id:  # 之前没有匹配结果
-                        if key in pc_set:
-                            source = DC_CHAR_DND
-                        else:
-                            source = DC_CHAR_HP
+                        source = DC_CHAR_DND if key in pc_set else DC_CHAR_HP
                         target_id = key
                     if value == target_intent:
-                        if key in pc_set:
-                            source = DC_CHAR_DND
-                        else:
-                            source = DC_CHAR_HP
+                        source = DC_CHAR_DND if key in pc_set else DC_CHAR_HP
                         return source, key
                     break
         elif len(target_poss) > 1:  # 模糊的结果

@@ -171,7 +171,7 @@ def parse_roll_exp(input_str: str, depth: int = 0) -> RollExpression:
 
     # 先处理首个连接符, 若不是+或者-, 则默认为+
     if input_str[0] not in ("+", "-"):
-        input_str = "+" + input_str
+        input_str = f"+{input_str}"
 
     # 递归终点之一: 是单个int
     try:
@@ -181,8 +181,7 @@ def parse_roll_exp(input_str: str, depth: int = 0) -> RollExpression:
         pass
     # 递归终点之一: 形如(+/-)XDY, 不包含其他修饰符和连接符
     xdy_re = "([1-9][0-9]*)?D([1-9][0-9]*)?"
-    xdy_match = re.match("[+-]"+xdy_re+"$", input_str)
-    if xdy_match:
+    if xdy_match := re.match(f"[+-]{xdy_re}$", input_str):
         return RollExpressionXDY(input_str)
 
     # 其他情况都要用复杂表达式处理
@@ -203,8 +202,7 @@ def parse_roll_exp(input_str: str, depth: int = 0) -> RollExpression:
         while has_mod:
             has_mod = False
             for mod_re in ROLL_MODIFIERS_DICT.keys():
-                mod_match = re.search(mod_re, cur_str)
-                if mod_match:
+                if mod_match := re.search(mod_re, cur_str):
                     m_span = mod_match.span()
                     mod_str, cur_str = cur_str[m_span[0]:m_span[1]], cur_str[:m_span[0]] + cur_str[m_span[1]:]
                     exp.append_modifier(ROLL_MODIFIERS_DICT[mod_re](mod_str))
@@ -274,12 +272,16 @@ def preprocess_roll_exp(input_str: str) -> str:
     # output_str = re.sub(r"\s", "", output_str)  # 去除空格和换行
     output_str = output_str.upper()
     output_str = to_english_str(output_str)
-    output_str = re.sub(r"(^|[^0-9])(D[0-9]*优势)",
-                        lambda match: match.group(1) + "2" + match.group(2)[:-2] + "K1",
-                        output_str)
-    output_str = re.sub(r"(^|[^0-9])(D[0-9]*劣势)",
-                        lambda match: match.group(1) + "2" + match.group(2)[:-2] + "KL1",
-                        output_str)
+    output_str = re.sub(
+        r"(^|[^0-9])(D[0-9]*优势)",
+        lambda match: f"{match.group(1)}2{match.group(2)[:-2]}K1",
+        output_str,
+    )
+    output_str = re.sub(
+        r"(^|[^0-9])(D[0-9]*劣势)",
+        lambda match: f"{match.group(1)}2{match.group(2)[:-2]}KL1",
+        output_str,
+    )
     output_str = re.sub(r"^(.+)抗性$",
                         lambda match: f"({match.group(1)})/2",
                         output_str)

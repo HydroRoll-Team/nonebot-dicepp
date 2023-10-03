@@ -70,7 +70,11 @@ class DataManager:
                     default_val_cur = default_val
             else:
                 # 如果当前节点不是最终目标节点且缺省值不为None, 则用空字典作为缺省值
-                default_val_cur = dict() if (default_val is not None or default_gen is not None) else None
+                default_val_cur = (
+                    {}
+                    if (default_val is not None or default_gen is not None)
+                    else None
+                )
 
             # 获取当前节点的内容
             cur_path = path[i]
@@ -83,17 +87,14 @@ class DataManager:
                 parent_node[cur_path] = default_val_cur
                 data_chunk.dirty = True
             cur_node = parent_node[cur_path]
-            if strict_check:  # 检查是否与默认值拥有相同类型
+            if strict_check:
                 if default_val_cur is not None and type(cur_node) != type(default_val_cur):
                     raise DataManagerError(f"[GetData] 无法通过严格的类型检查,"
                                            f" {type(cur_node)} != {type(default_val_cur)}\n"
                                            f"路径: {path} 当前节点: {path[i]} 已有值:{cur_node}")
             parent_node = cur_node
 
-        if get_ref:
-            return cur_node
-        else:  # 默认返回拷贝
-            return copy.deepcopy(cur_node)
+        return cur_node if get_ref else copy.deepcopy(cur_node)
 
     def set_data(self, target: str, path: List[str], new_val: Any) -> None:
         """
@@ -112,11 +113,7 @@ class DataManager:
         for i in range(len(path)):
             # 如果当前节点不是最终目标节点, 则用空字典作为缺省值
             is_last = (i == len(path) - 1)
-            if is_last:
-                new_val_cur = new_val
-            else:
-                new_val_cur = dict()  # 中间节点
-
+            new_val_cur = new_val if is_last else {}
             # 获取当前节点的内容
             cur_path = path[i]
 
@@ -158,7 +155,7 @@ class DataManager:
                 data_chunk.root = {}
                 return cur_node
             else:
-                raise DataManagerError(f"[DeleteData] 尝试非安全地删除所有数据!")
+                raise DataManagerError("[DeleteData] 尝试非安全地删除所有数据!")
 
         for i in range(len(path)):
             is_last = (i == len(path) - 1)
@@ -168,11 +165,11 @@ class DataManager:
             if type(parent_node) is not dict:
                 raise DataManagerError(f"[DeleteData] 尝试获取的路径非终端节点不是字典类型! 类型: {type(parent_node)}")
 
-            if cur_path not in parent_node:  # 不存在则抛出异常
+            if cur_path not in parent_node:
                 if ignore_miss:
                     return None
                 else:
-                    raise DataManagerError(f"[DeleteData] 无法删除不存在的路径")
+                    raise DataManagerError("[DeleteData] 无法删除不存在的路径")
             cur_node = parent_node[cur_path]
 
             if is_last:
@@ -215,12 +212,12 @@ class DataManager:
         """
         从本地文件中读取数据, 会完全用本地文件覆盖内存中的信息
         """
-        self.__dataChunks: Dict[str, DataChunkBase] = dict()
+        self.__dataChunks: Dict[str, DataChunkBase] = {}
         for dcType in DATA_CHUNK_TYPES:
             dc_name = dcType.get_identifier()
             json_path = os.path.join(self.dataPath, f"{dc_name}.json")
             json_path_readable = json_path.replace(ROOT_DATA_PATH, "~")
-            json_path_tmp = json_path + ".tmp"
+            json_path_tmp = f"{json_path}.tmp"
             json_path_tmp_readable = json_path_tmp.replace(ROOT_DATA_PATH, "~")
             if os.path.exists(json_path_tmp):  # 先看看能不能从临时文件恢复, 临时文件应该比正式文件更新
                 try:
@@ -253,7 +250,7 @@ class DataManager:
             json_path = os.path.join(self.dataPath, f"{dc_name}.json")
             # 为了安全起见, 先将文件保存在临时文件中
             json_path_readable = json_path.replace(ROOT_DATA_PATH, "~")
-            json_path_tmp = json_path + ".tmp"
+            json_path_tmp = f"{json_path}.tmp"
             json_path_tmp_readable = json_path_tmp.replace(ROOT_DATA_PATH, "~")
             try:
                 await update_json_async(dataChunk.to_json(), json_path_tmp)

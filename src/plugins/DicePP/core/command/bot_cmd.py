@@ -45,8 +45,7 @@ class BotDelayCommand(BotCommandBase):
         self.seconds = seconds
 
     def __str__(self):
-        s = f"Bot \033[0;37m{self.bot_id}\033[0m delay \033[0;33m{self.seconds}\033[0m seconds"
-        return s
+        return f"Bot \033[0;37m{self.bot_id}\033[0m delay \033[0;33m{self.seconds}\033[0m seconds"
 
 
 class BotLeaveGroupCommand(BotCommandBase):
@@ -59,5 +58,4 @@ class BotLeaveGroupCommand(BotCommandBase):
         self.target_group_id = target_group_id
 
     def __str__(self):
-        s = f"Bot \033[0;37m{self.bot_id}\033[0m leave group \033[0;33m{self.target_group_id}\033[0m"
-        return s
+        return f"Bot \033[0;37m{self.bot_id}\033[0m leave group \033[0;33m{self.target_group_id}\033[0m"

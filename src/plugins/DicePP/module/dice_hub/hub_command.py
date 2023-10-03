@@ -100,8 +100,7 @@ def hash_hub_msg(msg_str: str) -> str:
         hash_val = (hash_val << 5) ^ (hash_val >> 27) ^ ord(c)
         hash_val = hash_val % (2 ** 32)
     hash_str = str(hash_val)
-    hash_str = base64.b64encode(hash_str.encode(ENCODE_STYLE)).decode(ENCODE_STYLE)[:8]
-    return hash_str
+    return base64.b64encode(hash_str.encode(ENCODE_STYLE)).decode(ENCODE_STYLE)[:8]
 
 
 def format_slice_head(m_type: str, m_hash: str, m_size: int, m_info: str):
@@ -149,7 +148,7 @@ def try_slice_hub_msg(command_list: List[BotCommandBase]) -> List[BotCommandBase
             head_msg = format_hub_msg(HUB_MSG_TYPE_SLICE_HEAD, format_slice_head(msg_type, hash_str, msg_size, head_info))
             new_command_list.append(BotSendMsgCommand(command.bot_id, head_msg, command.targets))
             sliced_body_msg = [body_info]
-            for i in range(body_num - 1):
+            for _ in range(body_num - 1):
                 sliced_body_msg[-1], left_body_info = sliced_body_msg[-1][:info_in_body_size_final], sliced_body_msg[-1][info_in_body_size_final:]
                 sliced_body_msg.append(left_body_info)
             assert body_num == len(sliced_body_msg), (body_num, sliced_body_msg)
@@ -282,10 +281,13 @@ class HubCommand(UserCommandBase):
         ports = [PrivateMessagePort(remote_id) for remote_id in sync_remote_list]
         sync_info = format_hub_msg(HUB_MSG_TYPE_UPDATE, sync_info)
         for port in ports:
-            command_list.append(BotDelayCommand(self.bot.account, get_random_delay()))  # 随机等待一段时间降低风险
-            command_list.append(BotSendMsgCommand(self.bot.account, sync_info, [port]))
-        command_list = try_slice_hub_msg(command_list)
-        return command_list
+            command_list.extend(
+                (
+                    BotDelayCommand(self.bot.account, get_random_delay()),
+                    BotSendMsgCommand(self.bot.account, sync_info, [port]),
+                )
+            )
+        return try_slice_hub_msg(command_list)
 
     def get_help(self, keyword: str, meta: MessageMetaData) -> str:
         return ""
@@ -346,8 +348,7 @@ class HubCommand(UserCommandBase):
         port = PrivateMessagePort(meta.user_id)
         command_list = []
         if command_type == HUB_MSG_TYPE_MSG:  # 把远端发送的消息转发给master
-            master_list = self.bot.get_master_ids()
-            if master_list:  # 通知Master新消息
+            if master_list := self.bot.get_master_ids():
                 member_info = f"{meta.nickname}({meta.user_id})"
                 feedback_to_master = self.format_loc(LOC_HUB_MSG_IN, member_info=member_info, msg=command_info)
                 command_list.append(BotSendMsgCommand(self.bot.account, feedback_to_master, [PrivateMessagePort(master_list[0])]))
@@ -370,15 +371,25 @@ class HubCommand(UserCommandBase):
                 # 通知对方已接收连接
                 feedback = self.format_loc(LOC_HUB_CONNECT)
                 feedback = format_hub_msg(HUB_MSG_TYPE_MSG, feedback)
-                command_list.append(BotDelayCommand(self.bot.account, get_random_delay()))  # 随机等待一段时间降低风险
-                command_list.append(BotSendMsgCommand(self.bot.account, feedback, [port]))
-                # 通知Master连接成功
-                master_list = self.bot.get_master_ids()
-                if master_list:
+                command_list.extend(
+                    (
+                        BotDelayCommand(self.bot.account, get_random_delay()),
+                        BotSendMsgCommand(self.bot.account, feedback, [port]),
+                    )
+                )
+                if master_list := self.bot.get_master_ids():
                     member_info = f"{meta.nickname}({meta.user_id})"
                     feedback_to_master = self.format_loc(LOC_HUB_NEW_MEMBER, member_info=member_info)
-                    command_list.append(BotDelayCommand(self.bot.account, get_random_delay()))  # 随机等待一段时间降低风险
-                    command_list.append(BotSendMsgCommand(self.bot.account, feedback_to_master, [PrivateMessagePort(master_list[0])]))
+                    command_list.extend(
+                        (
+                            BotDelayCommand(self.bot.account, get_random_delay()),
+                            BotSendMsgCommand(
+                                self.bot.account,
+                                feedback_to_master,
+                                [PrivateMessagePort(master_list[0])],
+                            ),
+                        )
+                    )
         elif command_type == HUB_MSG_TYPE_UPDATE:  # 收到远端发送的同步消息
             sync_data = command_info
             try:
@@ -392,22 +403,37 @@ class HubCommand(UserCommandBase):
         elif command_type == HUB_MSG_TYPE_REQ_CARD:  # 1.远端发起连接请求时也会请求本机的信息 2.远端收到本机同步消息, 但没有本机的记录
             self_card = self.bot.hub_manager.generate_card()
             connect_msg = format_hub_msg(HUB_MSG_TYPE_CARD, self_card)
-            command_list.append(BotDelayCommand(self.bot.account, get_random_delay()))  # 随机等待一段时间降低风险
-            command_list.append(BotSendMsgCommand(self.bot.account, connect_msg, [port]))
+            command_list.extend(
+                (
+                    BotDelayCommand(self.bot.account, get_random_delay()),
+                    BotSendMsgCommand(self.bot.account, connect_msg, [port]),
+                )
+            )
         elif command_type == HUB_MSG_TYPE_SYNC_CONFIRM:  # 远端收到同步信息以后回复确认并附带远端的远端列表
             confirm_data = command_info
             reroute_req_list = self.bot.hub_manager.process_confirm_data(meta.user_id, command_type, confirm_data)
             for reroute_req_id in reroute_req_list:
                 reroute_req_info = format_hub_msg(HUB_MSG_TYPE_REQ_REROUTE, reroute_req_id)
-                command_list.append(BotDelayCommand(self.bot.account, get_random_delay()))  # 随机等待一段时间降低风险
-                command_list.append(BotSendMsgCommand(self.bot.account, reroute_req_info, [port]))
+                command_list.extend(
+                    (
+                        BotDelayCommand(self.bot.account, get_random_delay()),
+                        BotSendMsgCommand(
+                            self.bot.account, reroute_req_info, [port]
+                        ),
+                    )
+                )
         elif command_type == HUB_MSG_TYPE_REQ_REROUTE:  # 收到远端要求转发信息的要求
             reroute_id = command_info
-            reroute_info = self.bot.hub_manager.generate_reroute_info(reroute_id)
-            if reroute_info:
+            if reroute_info := self.bot.hub_manager.generate_reroute_info(
+                reroute_id
+            ):
                 reroute_info = format_hub_msg(HUB_MSG_TYPE_REROUTE, reroute_info)
-                command_list.append(BotDelayCommand(self.bot.account, get_random_delay()))  # 随机等待一段时间降低风险
-                command_list.append(BotSendMsgCommand(self.bot.account, reroute_info, [port]))
+                command_list.extend(
+                    (
+                        BotDelayCommand(self.bot.account, get_random_delay()),
+                        BotSendMsgCommand(self.bot.account, reroute_info, [port]),
+                    )
+                )
         elif command_type == HUB_MSG_TYPE_REROUTE:  # 收到远端转发过来的信息
             reroute_info = command_info
             self.bot.hub_manager.process_reroute_info(reroute_info)

@@ -48,10 +48,13 @@ class MyTestCase(unittest.TestCase):
     def test0_save(self):
         print("开始测试保存功能")
 
-        @custom_data_chunk(identifier=f"Test_Add_1")
+
+
+        @custom_data_chunk(identifier="Test_Add_1")
         class _(DataChunkBase):
             def __init__(self):
                 super().__init__()
+
         self.data_manager = DataManager(test_path)
         self.data_manager.set_data("Test_A", ["Level-1-A", "Attr-2-A"], 0)
         self.data_manager.set_data("Test_B", ["Level-1-A"], "This is test B!")
@@ -85,10 +88,16 @@ class MyTestCase(unittest.TestCase):
         print("带默认值的get可以创建不存在的数据")
 
     def test2_obj(self):
-        @custom_data_chunk(identifier=f"Test_Object", include_json_object=True)
+
+
+
+        @custom_data_chunk(identifier="Test_Object", include_json_object=True)
         class _(DataChunkBase):
             def __init__(self):
                 super().__init__()
+
+
+
 
         @custom_json_object
         class DumbJsonObject(JsonObject):
@@ -109,8 +118,7 @@ class MyTestCase(unittest.TestCase):
                     "d": self.DictField,
                 }
                 import json
-                res = json.dumps(json_dict)
-                return res
+                return json.dumps(json_dict)
 
             def deserialize(self, json_str: str) -> None:
                 import json
@@ -120,6 +128,8 @@ class MyTestCase(unittest.TestCase):
                 self.strField = json_dict["s"]
                 self.ListField = json_dict["l"]
                 self.DictField = json_dict["d"]
+
+
         self.data_manager = DataManager(test_path)
         dumb_obj_1: DumbJsonObject = DumbJsonObject()
         dumb_obj_1.intField = -1
