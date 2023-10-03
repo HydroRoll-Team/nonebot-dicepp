@@ -50,7 +50,7 @@ class StatisticsCommand(UserCommandBase):
             feedback += stat_roll_info(user_stat.roll)
         elif arg_str == "群聊":
             if not meta.group_id:
-                feedback += f"当前不在群聊中..."
+                feedback += "当前不在群聊中..."
             # 统计处理信息情况
             try:
                 group_stat: GroupStatInfo = self.bot.data_manager.get_data(DC_GROUP_DATA, [meta.group_id, DCK_GROUP_STAT])
@@ -76,8 +76,8 @@ class StatisticsCommand(UserCommandBase):
                     # 统计指令使用情况
                     merge_user_stat.cmd += user_stat.cmd
                 feedback += f"今日收到信息:{merge_user_stat.msg.cur_day_val}," \
-                            f" 昨日:{merge_user_stat.msg.last_day_val}," \
-                            f" 总计:{merge_user_stat.msg.total_val}\n"
+                                f" 昨日:{merge_user_stat.msg.last_day_val}," \
+                                f" 总计:{merge_user_stat.msg.total_val}\n"
                 feedback += stat_cmd_info(merge_user_stat.cmd)
         elif meta.user_id in self.bot.get_master_ids() and arg_str == "所有群聊":
             if meta.user_id not in self.bot.get_master_ids():
@@ -138,14 +138,8 @@ def stat_cmd_info(cmd_stat: UserCommandStatInfo) -> str:
             total_info_list.append(f"{name}:{total_num}")
         if today_num:
             today_info_list.append(f"{name}:{today_num}")
-    if total_info_list:
-        total_info = ", ".join(total_info_list)
-    else:
-        total_info = "暂无记录"
-    if today_info_list:
-        today_info = ", ".join(today_info_list)
-    else:
-        today_info = "暂无记录"
+    total_info = ", ".join(total_info_list) if total_info_list else "暂无记录"
+    today_info = ", ".join(today_info_list) if today_info_list else "暂无记录"
     return f"今日指令记录: {today_info}\n总计: {total_info}\n"
 
 
@@ -155,14 +149,18 @@ def stat_roll_info(roll_stat: RollStatInfo) -> str:
     if sum(roll_stat.d20.cur_list) == 0:
         d20_avg = 0
     else:
-        d20_avg = sum([(i + 1) * num for i, num in enumerate(roll_stat.d20.cur_list)]) / sum(roll_stat.d20.cur_list)
+        d20_avg = sum(
+            (i + 1) * num for i, num in enumerate(roll_stat.d20.cur_list)
+        ) / sum(roll_stat.d20.cur_list)
     today_info += " 平均值: {:.3f}".format(d20_avg)
     # 总计
     total_info = f"总计掷骰次数:{roll_stat.times.total_val} D20统计:{roll_stat.d20.total_list}"
     if sum(roll_stat.d20.total_list) == 0:
         d20_avg = 0
     else:
-        d20_avg = sum([(i + 1) * num for i, num in enumerate(roll_stat.d20.total_list)]) / sum(roll_stat.d20.total_list)
+        d20_avg = sum(
+            (i + 1) * num for i, num in enumerate(roll_stat.d20.total_list)
+        ) / sum(roll_stat.d20.total_list)
     total_info += " 平均值: {:.3f}".format(d20_avg)
     return f"{today_info}\n{total_info}\n"
 

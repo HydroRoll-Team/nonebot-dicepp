@@ -95,9 +95,7 @@ class DNDCharInfo(JsonObject):
         # 记录姓名
         name_str = char_info_dict[CHAR_INFO_KEY_NAME]
 
-        # 处理生命值相关信息
-        hp_info_str = char_info_dict[CHAR_INFO_KEY_HP]
-        if hp_info_str:
+        if hp_info_str := char_info_dict[CHAR_INFO_KEY_HP]:
             # 处理生命值信息
             hp_cur: int
             hp_max: int = 0
@@ -140,8 +138,7 @@ class DNDCharInfo(JsonObject):
             hp_dice_num: int = 0
             hp_dice_max: int = 0
 
-            hp_dice_info_str = char_info_dict[CHAR_INFO_KEY_HP_DICE]
-            if hp_dice_info_str:
+            if hp_dice_info_str := char_info_dict[CHAR_INFO_KEY_HP_DICE]:
                 hp_dice_type_str: str
                 hp_dice_num_str: str
                 hp_dice_max_str: str
@@ -205,10 +202,11 @@ class DNDCharInfo(JsonObject):
             char_info_dict[CHAR_INFO_KEY_NAME] = self.name
         read_data_from_str_to_dict(self.hp_info.get_char_info(), char_info_dict)
         read_data_from_str_to_dict(self.ability_info.get_char_info(), char_info_dict)
-        char_info = ""
-        for key in CHAR_INFO_KEY_LIST:
-            if key in char_info_dict:
-                char_info += f"{key} {char_info_dict[key]}\n"
+        char_info = "".join(
+            f"{key} {char_info_dict[key]}\n"
+            for key in CHAR_INFO_KEY_LIST
+            if key in char_info_dict
+        )
         return char_info.strip()
 
     def use_hp_dice(self, num: int) -> str:

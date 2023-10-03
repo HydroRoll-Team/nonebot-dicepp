@@ -73,20 +73,19 @@ class HelpCommand(UserCommandBase):
         return [BotSendMsgCommand(self.bot.account, feedback, [port])]
 
     def get_help(self, keyword: str, meta: MessageMetaData) -> str:
-        if keyword == "指令":
+        if keyword == "协议":
+            return self.bot.cfg_helper.get_config(CFG_AGREEMENT)[0]
+        elif keyword == "指令":
             feedback: str = ""
             for command in self.bot.command_dict.values():
-                description_text = command.get_description()
-                if description_text:
+                if description_text := command.get_description():
                     feedback += description_text + "\n"
             return feedback[:-1] if feedback else "暂无信息"
-        elif keyword == "链接":
-            return BOT_GIT_LINK
-        elif keyword == "协议":
-            return self.bot.cfg_helper.get_config(CFG_AGREEMENT)[0]
-        elif keyword == "更新":  # ToDo: 更新内容
+        elif keyword == "更新":
             return "暂无信息"
 
+        elif keyword == "链接":
+            return BOT_GIT_LINK
         return ""
 
     def get_description(self) -> str:

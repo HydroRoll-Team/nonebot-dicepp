@@ -33,12 +33,12 @@ skill_parent_dict = {
 
 }
 assert len(skill_parent_dict) == skill_num
-assert sum([1 for v in skill_parent_dict.values() if v not in ability_list]) == 0
+assert sum(1 for v in skill_parent_dict.values() if v not in ability_list) == 0
 skill_synonym_dict = {
     "特技": "体操", "妙手": "巧手", "潜行": "隐匿", "隐蔽": "隐匿", "隐秘": "隐匿", "躲藏": "隐匿",
     "驯养": "驯兽", "驯服": "驯兽", "医疗": "医药", "医术": "医药", "观察": "察觉", "生存": "求生",
     "欺骗": "欺瞒", "欺诈": "欺瞒", "哄骗": "欺瞒", "唬骗": "欺瞒", "威胁": "威吓", "说服": "游说"}
-assert sum([1 for v in skill_synonym_dict.values() if v not in skill_list]) == 0
+assert sum(1 for v in skill_synonym_dict.values() if v not in skill_list) == 0
 
 # 豁免
 saving_list = ["力量豁免", "敏捷豁免", "体质豁免", "智力豁免", "感知豁免", "魅力豁免", ]
@@ -48,7 +48,9 @@ saving_parent_dict = {
     "力量豁免": "力量", "敏捷豁免": "敏捷", "体质豁免": "体质", "智力豁免": "智力", "感知豁免": "感知", "魅力豁免": "魅力",
 }
 assert len(saving_parent_dict) == saving_num
-assert sum([1 for v in saving_parent_dict.values() if v not in ability_list]) == 0
+assert (
+    sum(1 for v in saving_parent_dict.values() if v not in ability_list) == 0
+)
 
 # 攻击
 attack_list = ["力量攻击", "敏捷攻击", "体质攻击", "智力攻击", "感知攻击", "魅力攻击", ]
@@ -58,13 +60,15 @@ attack_parent_dict = {
     "力量攻击": "力量", "敏捷攻击": "敏捷", "体质攻击": "体质", "智力攻击": "智力", "感知攻击": "感知", "魅力攻击": "魅力",
 }
 assert len(attack_parent_dict) == attack_num
-assert sum([1 for v in attack_parent_dict.values() if v not in ability_list]) == 0
+assert (
+    sum(1 for v in attack_parent_dict.values() if v not in ability_list) == 0
+)
 
 # 可检定条目
 check_item_list = ability_list + skill_list + saving_list + attack_list
 check_item_num = ability_num * 3 + skill_num
 
-check_item_index_dict = dict(list((k, i) for i, k in enumerate(check_item_list)))
+check_item_index_dict = dict([(k, i) for i, k in enumerate(check_item_list)])
 assert len(check_item_list) == len(check_item_index_dict) == check_item_num
 
 # 可额外加值条目
@@ -73,7 +77,7 @@ attack_all_key = "攻击"
 ext_item_list = check_item_list + [saving_all_key, attack_all_key]
 ext_item_num = check_item_num + 2
 
-ext_item_index_dict = dict(list((k, i) for i, k in enumerate(ext_item_list)))
+ext_item_index_dict = dict([(k, i) for i, k in enumerate(ext_item_list)])
 assert len(ext_item_list) == len(ext_item_index_dict) == ext_item_num
 
 
@@ -179,7 +183,7 @@ class AbilityInfo(JsonObject):
             assert ext_str[0] in ["+", "-"], f"调整值无效: 必须以[优势/劣势]+/-开头\n{check_name}:{ext_str} "
             # 校验表达式合法性
             try:
-                res = exec_roll_exp("D20" + ext_str)
+                res = exec_roll_exp(f"D20{ext_str}")
                 res.get_complete_result()
             except RollDiceError as e:
                 raise AssertionError(f"无效的调整值: {check_name}:{ext_str} {e.info}")
@@ -193,13 +197,11 @@ class AbilityInfo(JsonObject):
         self.check_prof = check_prof
 
     def get_prof_bonus(self) -> int:
-        prof_bonus = 2 + (self.level - 1) // 4
-        return prof_bonus
+        return 2 + (self.level - 1) // 4
 
     def get_modifier(self, ability_index: int) -> int:
         ability_score = self.ability[ability_index]
-        modifier = (ability_score - 10) // 2
-        return modifier
+        return (ability_score - 10) // 2
 
     def perform_check(self, check_name: str, advantage: int, mod_str: str) -> Tuple[str, str, int]:
         """
@@ -236,14 +238,14 @@ class AbilityInfo(JsonObject):
         # 计算熟练加值
         prof_bonus = self.check_prof[check_index] * self.get_prof_bonus()
         if self.check_prof[check_index] == 0:
-            hint_str += f"无熟练加值 "
+            hint_str += "无熟练加值 "
         elif self.check_prof[check_index] == 1:
             hint_str += f"熟练加值:{prof_bonus} "
         else:
             hint_str += f"熟练加值:{self.get_prof_bonus()}*{self.check_prof[check_index]} "
         prof_bonus_str: str = ""
         if prof_bonus != 0:
-            prof_bonus_str = "+" + str(prof_bonus) if prof_bonus > 0 else str(prof_bonus)
+            prof_bonus_str = f"+{str(prof_bonus)}" if prof_bonus > 0 else str(prof_bonus)
 
         # 计算属性调整值
         ability_modifier: int
@@ -255,7 +257,11 @@ class AbilityInfo(JsonObject):
             hint_str += f"{ability_list[check_index]}调整值:{ability_modifier} "
         ability_modifier_str: str = ""
         if ability_modifier != 0:
-            ability_modifier_str = "+" + str(ability_modifier) if ability_modifier > 0 else str(ability_modifier)
+            ability_modifier_str = (
+                f"+{str(ability_modifier)}"
+                if ability_modifier > 0
+                else str(ability_modifier)
+            )
 
         # 得到额外加值
         ext_str = self.check_ext[check_index]
@@ -275,12 +281,10 @@ class AbilityInfo(JsonObject):
             hint_str += f"临时加值:{mod_str} "
 
         # 计算优劣势
-        assert advantage in [-1, 0, 1], "Unexpected Code: 0"
+        assert advantage in {-1, 0, 1}, "Unexpected Code: 0"
         is_counter: bool  # 优劣势是否被抵消过
         adv_flag = self.check_adv[check_index]
-        parent_flag = 0
-        if is_skill:
-            parent_flag = self.check_adv[parent_index]
+        parent_flag = self.check_adv[parent_index] if is_skill else 0
         adv_flag = max(min(adv_flag + parent_flag, 1), -1)
         is_counter = (adv_flag == 0 and parent_flag != 0)
         adv_flag = max(min(adv_flag + advantage, 1), -1)
@@ -289,20 +293,13 @@ class AbilityInfo(JsonObject):
             adv_flag = 0
             hint_str += "优劣抵消 "
         if adv_flag != 0 and advantage == 0:
-            if adv_flag > 0:
-                hint_str += "自带优势 "
-            else:
-                hint_str += "自带劣势 "
-
+            hint_str += "自带优势 " if adv_flag > 0 else "自带劣势 "
         hint_str = hint_str.strip()
 
         # 组合成掷骰表达式
         roll_exp: str
         if adv_flag != 0:
-            if adv_flag > 0:
-                roll_exp = "D20优势"
-            else:
-                roll_exp = "D20劣势"
+            roll_exp = "D20优势" if adv_flag > 0 else "D20劣势"
         else:
             roll_exp = "D20"
 
@@ -339,7 +336,7 @@ class AbilityInfo(JsonObject):
                 prof_list.append(prof_name)
             else:
                 prof_list.append(f"{scale}*{prof_name}")
-        if len(prof_list) > 0:
+        if prof_list:
             info += f"{CHAR_INFO_KEY_PROF} {'/'.join(prof_list)}\n"
 
         # 额外加值信息
@@ -349,12 +346,9 @@ class AbilityInfo(JsonObject):
         for check_name, ext_str in ext_info:
             ext_str_prefix = ""
             if check_name in adv_dict:
-                if adv_dict[check_name] > 0:
-                    ext_str_prefix = "优势"
-                else:
-                    ext_str_prefix = "劣势"
+                ext_str_prefix = "优势" if adv_dict[check_name] > 0 else "劣势"
             ext_list.append(f"{check_name}:{ext_str_prefix}{ext_str}")
-        if len(ext_list) > 0:
+        if ext_list:
             info += f"{CHAR_INFO_KEY_EXT} {'/'.join(ext_list)}\n"
 
         return info.strip()

@@ -71,7 +71,7 @@ class MyTestCase(unittest.TestCase):
         self.__show_exec_res("D", checker=lambda s: s.split("=")[0] == "1D20" and 1 <= int(s.split("=")[1]) <= 20)
         self.__show_exec_res("1D", checker=lambda s: s.split("=")[0] == "1D20" and 1 <= int(s.split("=")[1]) <= 20)
         self.__show_exec_res("D4", checker=lambda s: s.split("=")[0] == "1D4" and 1 <= int(s.split("=")[1]) <= 4)
-        self.__show_exec_res("1", checker=lambda s: "1" == s)
+        self.__show_exec_res("1", checker=lambda s: s == "1")
         self.__show_exec_res("+1D20", checker=lambda s: s.split("=")[0] == "1D20" and 1 <= int(s.split("=")[1]) <= 20)
         self.__show_exec_res("-1D20", checker=lambda s: s.split("=")[0] == "-1D20" and -20 <= int(s.split("=")[1]) <= -1)
 

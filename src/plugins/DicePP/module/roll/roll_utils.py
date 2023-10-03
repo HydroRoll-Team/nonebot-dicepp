@@ -92,7 +92,7 @@ def remove_redundant_parentheses(input_str: str, readable: bool = True) -> str:
         inner_operators = sorted(inner_operators, key=lambda x: x[0])
         # print(par_str, inner_par_info_list, inner_operators, outer_priority_rhs, outer_priority_lhs)
         # 递归剔除内部括号
-        if len(inner_par_info_list) != 0:
+        if inner_par_info_list:
             if len(inner_operators) == 0:  # 内部没有运算符, 直接递归剔除[1:-1]
                 assert len(inner_par_info_list) == 1, str(inner_par_info_list)
                 output_str = f"({remove_par(par_str[1:-1], outer_priority_lhs, outer_priority_rhs)})"
@@ -130,9 +130,6 @@ def remove_redundant_parentheses(input_str: str, readable: bool = True) -> str:
             can_remove_outer = (outer_priority_lhs <= inner_operators[0][1]
                                 and outer_priority_rhs <= inner_operators[-1][1])
         # print(par_str, output_str, can_remove_outer)
-        if can_remove_outer:
-            return output_str[1:-1]
-        else:
-            return output_str
+        return output_str[1:-1] if can_remove_outer else output_str
 
     return remove_par(f"({input_str})", -1, -1)

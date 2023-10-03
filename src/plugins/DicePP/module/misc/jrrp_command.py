@@ -40,10 +40,7 @@ class JrrpCommand(UserCommandBase):
         return [BotSendMsgCommand(self.bot.account, feedback, [port])]
 
     def get_help(self, keyword: str, meta: MessageMetaData) -> str:
-        if keyword == "jrrp":  # help后的接着的内容
-            feedback: str = ".jrrp 获取今日人品，每日0点刷新"
-            return feedback
-        return ""
+        return ".jrrp 获取今日人品，每日0点刷新" if keyword == "jrrp" else ""
 
     def get_description(self) -> str:
         return ".jrrp 获取今日人品"  # help指令中返回的内容

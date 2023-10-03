@@ -20,5 +20,9 @@ def get_exception_info() -> List[str]:
     msg = traceback.format_exception(et, ev, tb)
     for i, m in enumerate(msg):
         msg[i] = re.sub(r'File ".*DicePP(.*)"', lambda match: str(match.groups()[-1])[1:], m).strip()
-        msg[i] = re.sub(r", in.*\s{2,}", lambda match: str(match.group()).strip()+": ", msg[i])
+        msg[i] = re.sub(
+            r", in.*\s{2,}",
+            lambda match: f"{str(match.group()).strip()}: ",
+            msg[i],
+        )
     return msg[1:]

@@ -11,8 +11,7 @@ def read_json(path: str) -> dict:
     """
     with open(path, "r", encoding='utf-8') as f:
         js = f.read()
-        json_dict = json.loads(js)
-        return json_dict
+        return json.loads(js)
 
 
 def update_json(json_dict: dict, path: str) -> None:
@@ -74,19 +73,17 @@ def col_based_workbook_to_dict(wb: openpyxl.Workbook, keywords: List[str], error
     """
     result = {}
     for sheet_name in wb.sheetnames:
-        key_index_dict: Dict[str, int] = {}
         ws = wb[sheet_name]
         # 获取当前关键字列表
         if not keywords:
-            keywords_cur = []
-            for header_cell in ws[1]:
-                keywords_cur.append(header_cell.value)
+            keywords_cur = [header_cell.value for header_cell in ws[1]]
         else:
             keywords_cur = keywords
-        # 获取关键字索引
-        for header_cell in ws[1]:
-            if header_cell.value in keywords_cur:
-                key_index_dict[header_cell.value] = header_cell.column - 1
+        key_index_dict: Dict[str, int] = {
+            header_cell.value: header_cell.column - 1
+            for header_cell in ws[1]
+            if header_cell.value in keywords_cur
+        }
         # 检测关键字是否完整
         is_valid = True
         for keyword in keywords_cur:
@@ -97,10 +94,7 @@ def col_based_workbook_to_dict(wb: openpyxl.Workbook, keywords: List[str], error
         if not is_valid:
             continue
 
-        # 生成工作表字典
-        result[sheet_name] = {}
-        for keyword in keywords_cur:
-            result[sheet_name][keyword] = []
+        result[sheet_name] = {keyword: [] for keyword in keywords_cur}
         is_valid = False
         # 逐行生成内容
         for row in ws.iter_rows(min_row=2):
@@ -113,7 +107,7 @@ def col_based_workbook_to_dict(wb: openpyxl.Workbook, keywords: List[str], error
         if not is_valid:
             error_info.append(f"空工作表{wb.properties.title}->{sheet_name}, 未加载该工作表")
             del result[sheet_name]
-    if len(result) == 0:
+    if not result:
         error_info.append(f"表格中不含有任何可用工作表{wb.properties.title}")
     return result
 
@@ -141,11 +135,7 @@ def create_parent_dir(path: str):
     """为path递归创建所有不存在的父文件夹"""
     path = os.path.abspath(path)
     assert path and path[0] != "."
-    if "." not in path:  # path是文件夹
-        dir_name = path
-    else:  # path是文件
-        dir_name = os.path.dirname(path)
-
+    dir_name = path if "." not in path else os.path.dirname(path)
     if not os.path.exists(os.path.dirname(dir_name)):
         create_parent_dir(os.path.dirname(dir_name))
 

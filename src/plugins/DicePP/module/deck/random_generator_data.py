@@ -156,7 +156,7 @@ class RandomItem:
             self.source_type = RandomSourceType.Literal
             self.auxiliary_data = self.name
         else:
-            assert False, f"无效的资源类型"
+            assert False, "无效的资源类型"
 
         if self.next_gen_path:
             assert self.next_gen_path in global_source_dict
@@ -238,7 +238,7 @@ class RandomDataSource:
                 if self.random_seed_flag:
                     for bit_index, flag_name in enumerate(RT_KEY_LIST):
                         if self.random_seed_flag & (1 << (bit_index + 1)):
-                            val_text += flag_name + "|"
+                            val_text += f"{flag_name}|"
                     val_text = val_text[:-1]
                 if self.random_seed_exp:
                     val_text = f"{val_text}|{self.random_seed_exp}" if val_text else self.random_seed_exp
@@ -318,11 +318,10 @@ class RandomDataSource:
                             continue
                         if flag in RT_KEY_LIST:
                             self.random_seed_flag += 1 << (RT_KEY_LIST.index(flag) + 1)
-                        else:  # 掷骰表达式
-                            if is_roll_exp(flag):
-                                self.random_seed_exp = flag
-                            else:
-                                return f"随机方法{flag}是不合法的掷骰表达式"
+                        elif is_roll_exp(flag):
+                            self.random_seed_exp = flag
+                        else:
+                            return f"随机方法{flag}是不合法的掷骰表达式"
                 elif title == RAND_SOURCE_FIELD_LIMIT_SINGLE:
                     try:
                         self.limit_single = int(val_text)
@@ -352,7 +351,7 @@ class RandomDataSource:
                 first_item_row = row[0].row
                 break
         if first_item_row == -1:
-            return f"该工作表格式不正确"
+            return "该工作表格式不正确"
         # 读取条目
         self.items = []
         for row in target.iter_rows(min_row=first_item_row):
@@ -421,7 +420,7 @@ class RandomDataSource:
         # 检查格式化是否正确
         if self.format:
             try:
-                dumb_info = {name: "ABC" for name in self.items_in_group.keys()}
+                dumb_info = {name: "ABC" for name in self.items_in_group}
                 self.format.format(**dumb_info)
             except KeyError:
                 return f"随机生成器{self.name}格式化规则不正确: {self.format} 可用群组:{list(self.items_in_group.keys())}"
@@ -445,11 +444,12 @@ class RandomDataSource:
         # 找到需要生成的条目
         used_item: List[RandomItem] = []
         for group, item_list in self.items_in_group.items():
-            filtered_item_list = []
-            for item in item_list:
-                if not item.trigger_set or item.trigger_set.intersection(context.flag_set):
-                    filtered_item_list.append(item)
-            if filtered_item_list:
+            if filtered_item_list := [
+                item
+                for item in item_list
+                if not item.trigger_set
+                or item.trigger_set.intersection(context.flag_set)
+            ]:
                 if group:  # 从组内随机选一个条目
                     filtered_item_list = [select_item_from_group(filtered_item_list, self.random_seed_exp)]
                 used_item += filtered_item_list
@@ -478,14 +478,13 @@ class RandomDataSource:
                 result = self.format.format(**result_in_group)
             except KeyError:
                 result = f"随机生成器{self.name}格式化规则不正确: {self.format} {result_in_group}"
+        elif len(final_result_list) > 1:
+            final_result_list = sorted(final_result_list, key=lambda x: x[0].index)
+            result = "".join([t[1] for t in final_result_list])
+        elif len(final_result_list) == 1:
+            result = final_result_list[0][1]
         else:
-            if len(final_result_list) > 1:
-                final_result_list = sorted(final_result_list, key=lambda x: x[0].index)
-                result = "".join([t[1] for t in final_result_list])
-            elif len(final_result_list) == 1:
-                result = final_result_list[0][1]
-            else:
-                result = ""
+            result = ""
         # 使用自定义格式化函数
         if self.format_func:
             exec_global = {"result": result}
@@ -516,13 +515,13 @@ def flag_include(random_seed_flag: int, flag_name: str) -> bool:
 
 
 def select_item_from_group(item_list: List[RandomItem], weight_exp: str = "") -> RandomItem:
-    assert len(item_list) > 0
+    assert item_list
     cur_weight: int
     if weight_exp:
         cur_weight = exec_roll_exp(weight_exp).get_val()
     else:
         # 根据组内权重总和计算
-        weight_max = sum([item.weight for item in item_list])
+        weight_max = sum(item.weight for item in item_list)
         cur_weight = random.randint(1, weight_max)
     for item in item_list:
         if cur_weight <= item.weight:

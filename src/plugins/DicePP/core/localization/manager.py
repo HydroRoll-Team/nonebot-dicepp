@@ -134,10 +134,7 @@ class LocalizationManager:
             **kwargs: 本地化语句需要的参数, 可以传不会用到的参数
         """
         loc_text: LocalizationText = self.get_loc_text(key)
-        if kwargs:
-            return loc_text.get().format(**kwargs)
-        else:
-            return loc_text.get()
+        return loc_text.get().format(**kwargs) if kwargs else loc_text.get()
 
     def process_chat(self, msg: str, **kwargs) -> str:
         """
@@ -156,10 +153,7 @@ class LocalizationManager:
 
         loc_text: Optional[LocalizationText] = random.choice(valid_loc_text_list) if valid_loc_text_list else None
         if loc_text:
-            if kwargs:
-                return loc_text.get().format(**kwargs)
-            else:
-                return loc_text.get()
+            return loc_text.get().format(**kwargs) if kwargs else loc_text.get()
         return ""
 
 

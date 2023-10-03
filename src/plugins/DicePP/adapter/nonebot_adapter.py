@@ -111,12 +111,8 @@ async def handle_command(bot: NoneBot, event: MessageEvent):
     plain_msg = cq_message.extract_plain_text()
     raw_msg = str(cq_message)
 
-    # 构建Meta信息
-    group_id: str = ""
     user_id: str = str(event.get_user_id())
-    if isinstance(event, GroupMessageEvent):
-        group_id = str(event.group_id)
-
+    group_id = str(event.group_id) if isinstance(event, GroupMessageEvent) else ""
     # log_str = f"[Proxy Message] Bot \033[0;37m{bot.self_id}\033[0m receive message \033[0;33m{raw_msg}\033[0m from "
     # if group_id:
     #     log_str += f"\033[0;34m|Group: {group_id} User: {user_id}|\033[0m"
@@ -169,10 +165,9 @@ async def handle_request(bot: NoneBot, event: RequestEvent):
 
     # 处理请求
     if data:
-        approve: Optional[bool] = all_bots[bot.self_id].process_request(data)
-        if approve:
+        if approve := all_bots[bot.self_id].process_request(data):
             await event.approve(bot)
-        elif (approve is not None) and (not approve):
+        elif approve is not None:
             await event.reject(bot)
 
 

@@ -49,25 +49,21 @@ class NicknameCommand(UserCommandBase):
         feedback: str
 
         if not arg_str:  # 重设昵称
-            if not meta.group_id:
-                group_id = "default"
-            else:
-                group_id = meta.group_id
-
-            nickname_prev = self.bot.data_manager.delete_data("nickname", [meta.user_id, group_id])
-            if nickname_prev:
+            group_id = "default" if not meta.group_id else meta.group_id
+            if nickname_prev := self.bot.data_manager.delete_data(
+                "nickname", [meta.user_id, group_id]
+            ):
                 nickname_new = self.bot.get_nickname(meta.user_id, group_id)
                 feedback = self.format_loc(LOC_NICKNAME_RESET, nickname_prev=nickname_prev, nickname_new=nickname_new)
-            else:  # 获取不到当前昵称
+            else:
                 nickname_prev = self.bot.get_nickname(meta.user_id, group_id)
                 feedback = self.format_loc(LOC_NICKNAME_RESET_FAIL, nickname=nickname_prev)
-        else:  # 设置昵称
-            if not self.is_legal_nickname(arg_str):  # 非法昵称
-                feedback = self.format_loc(LOC_NICKNAME_ILLEGAL)
-            else:
-                self.bot.update_nickname(meta.user_id, meta.group_id, arg_str)
-                feedback = self.format_loc(LOC_NICKNAME_SET, nickname=arg_str)
+        elif self.is_legal_nickname(arg_str):
+            self.bot.update_nickname(meta.user_id, meta.group_id, arg_str)
+            feedback = self.format_loc(LOC_NICKNAME_SET, nickname=arg_str)
 
+        else:  # 非法昵称
+            feedback = self.format_loc(LOC_NICKNAME_ILLEGAL)
         # 回复端口
         if meta.group_id:
             port = GroupMessagePort(meta.group_id)
@@ -78,14 +74,15 @@ class NicknameCommand(UserCommandBase):
 
     def get_help(self, keyword: str, meta: MessageMetaData) -> str:
         if keyword == "nn":
-            help_str = "设置昵称：.nn [昵称]\n" \
-                       "私聊.nn视为操作全局昵称\n" \
-                       "昵称优先级:群昵称>私聊昵称>群名片>QQ昵称\n" \
-                       "群聊中的nn指令会智能修改先攻列表中的名字\n" \
-                       "示例:\n" \
-                       ".nn	//视为删除昵称\n" \
-                       ".nn dm //将昵称设置为dm"
-            return help_str
+            return (
+                "设置昵称：.nn [昵称]\n"
+                "私聊.nn视为操作全局昵称\n"
+                "昵称优先级:群昵称>私聊昵称>群名片>QQ昵称\n"
+                "群聊中的nn指令会智能修改先攻列表中的名字\n"
+                "示例:\n"
+                ".nn	//视为删除昵称\n"
+                ".nn dm //将昵称设置为dm"
+            )
         return ""
 
     def get_description(self) -> str:
@@ -103,7 +100,4 @@ class NicknameCommand(UserCommandBase):
         """
         if not nickname or len(nickname) > MAX_NICKNAME_LENGTH:  # 昵称过长
             return False
-        if nickname[0] == ".":
-            return False
-
-        return True
+        return nickname[0] != "."

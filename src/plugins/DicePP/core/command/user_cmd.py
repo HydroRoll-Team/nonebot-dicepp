@@ -65,8 +65,7 @@ class UserCommandBase(metaclass=abc.ABCMeta):
         Returns:
             bot_commands: 一个bot commands list, 即bot要进行的操作, 比如回复消息等等
         """
-        bot_commands = []
-        return bot_commands
+        return []
 
     @abc.abstractmethod
     def get_help(self, keyword: str, meta: MessageMetaData) -> str:

@@ -40,7 +40,7 @@ class InitList(JsonObject):
 
     def deserialize(self, json_str: str) -> None:
         json_dict: dict = json.loads(json_str)
-        assert "entities" in json_dict.keys()
+        assert "entities" in json_dict
         for key, value in json_dict.items():
             if key in self.__dict__:
                 value_init = self.__getattribute__(key)
@@ -71,7 +71,7 @@ class InitList(JsonObject):
             init: 生成先攻所需的完整掷骰表达式
         """
         # 检查有没有同名条目, 有则删掉旧的
-        replace_same_name = sum([entity.name == entity_name for entity in self.entities])
+        replace_same_name = sum(entity.name == entity_name for entity in self.entities)
         if replace_same_name:
             self.del_entity(entity_name)
 
@@ -94,7 +94,7 @@ class InitList(JsonObject):
         """
         # 检查同名条目
         all_index = [index for index, entity in enumerate(self.entities) if entity.name == entity_name]
-        if len(all_index) == 0:
+        if not all_index:
             raise InitiativeError(f"先攻列表中不存在名称为{entity_name}的条目")
         if len(all_index) > 1:
             raise InitiativeError(f"先攻列表中存在多个名称为{entity_name}的条目")

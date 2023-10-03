@@ -198,7 +198,7 @@ class QueryCommand(UserCommandBase):
             return [BotSendMsgCommand(self.bot.account, feedback, [port])]
 
         # 处理指令
-        if not arg_str and (mode == "query" or mode == "search"):
+        if not arg_str and mode in ["query", "search"]:
             feedback = self.get_state()
         elif mode == "query":
             feedback = self.query_info(arg_str, source_port, search_mode=0, show_mode=show_mode)
@@ -232,19 +232,20 @@ class QueryCommand(UserCommandBase):
         return [BotSendMsgCommand(self.bot.account, feedback, [port])]
 
     def get_help(self, keyword: str, meta: MessageMetaData) -> str:
-        if keyword in ["查询", "搜索", "q", "s"]:
-            help_str = "查询资料: .查询 查询目标"\
-                    "\n查询指令支持部分匹配, 可用/区分多个关键字"\
-                    "\n可以用搜索指令来匹配词条内容(而不是仅匹配关键字)"\
-                    "\n若有多条可能的结果, 可以通过查询或搜索后直接输入序号查询, 输入+或-可以翻页" \
-                    "\n可以用q作为查询(query)的缩写, 或用s作为搜索(search)的缩写" \
-                    "\n示例:"\
-                    "\n.查询 借机攻击"\
-                    "\n.查询 长弓"\
-                    "\n.查询 法师/6环"\
-                    "\n.搜索 长弓 // 返回所有含有长弓的词条(如物品, 怪物, 魔法物品, 能力)"\
-                    "\n.搜索 昏迷/施法时间 //利用法术词条中必然含有施法时间的规律查询和昏迷相关的法术"
-            return help_str
+        if keyword in {"查询", "搜索", "q", "s"}:
+            return (
+                "查询资料: .查询 查询目标"
+                "\n查询指令支持部分匹配, 可用/区分多个关键字"
+                "\n可以用搜索指令来匹配词条内容(而不是仅匹配关键字)"
+                "\n若有多条可能的结果, 可以通过查询或搜索后直接输入序号查询, 输入+或-可以翻页"
+                "\n可以用q作为查询(query)的缩写, 或用s作为搜索(search)的缩写"
+                "\n示例:"
+                "\n.查询 借机攻击"
+                "\n.查询 长弓"
+                "\n.查询 法师/6环"
+                "\n.搜索 长弓 // 返回所有含有长弓的词条(如物品, 怪物, 魔法物品, 能力)"
+                "\n.搜索 昏迷/施法时间 //利用法术词条中必然含有施法时间的规律查询和昏迷相关的法术"
+            )
         return ""
 
     def get_description(self) -> str:
@@ -289,8 +290,8 @@ class QueryCommand(UserCommandBase):
 
     def search_item(self, query_key_list: List[str], search_mode: int) -> List[int]:
         poss_result: List[int] = []
-        query_key_len: int = sum((len(key) for key in query_key_list))
         if search_mode == 0:  # 仅匹配条目关键字
+            query_key_len: int = sum((len(key) for key in query_key_list))
             for candidate_key in self.query_dict.keys():
                 if all(((key in candidate_key) for key in query_key_list)):  # 所有关键字都在candidate_key中出现
                     if query_key_len == len(candidate_key):  # 关键字正好和candidate_key一模一样, 可以直接返回了
@@ -320,14 +321,15 @@ class QueryCommand(UserCommandBase):
         for index, item in enumerate(items):
             item_keyword = item.key[0]
             item_desc = item.desc
-            item_tag = " " + get_tag_string(item.tag) if item.tag else ""
-            item_cat = " 目录: " + item.catalogue if item.catalogue else ""
-            item_syn = " 同义词: " + get_syn_string(item.key[1:]) if item.key[1:] else ""
+            item_tag = f" {get_tag_string(item.tag)}" if item.tag else ""
+            item_cat = f" 目录: {item.catalogue}" if item.catalogue else ""
+            item_syn = f" 同义词: {get_syn_string(item.key[1:])}" if item.key[1:] else ""
             item_info = self.format_loc(LOC_QUERY_MULTI_RESULT_ITEM, keyword=item_keyword, description=item_desc,
                                         tag=item_tag, cat=item_cat, syn=item_syn)
             multi_results += f"{index}. {item_info}\n"
-        feedback = self.format_loc(LOC_QUERY_MULTI_RESULT, multi_results=multi_results.strip())
-        return feedback
+        return self.format_loc(
+            LOC_QUERY_MULTI_RESULT, multi_results=multi_results.strip()
+        )
 
     @staticmethod
     def format_multiple_items_simple_feedback(items: List[QueryItem]):
@@ -365,10 +367,12 @@ class QueryCommand(UserCommandBase):
 
     def clean_records(self):
         """清理过期的查询指令"""
-        invalid_ports: Set[MessagePort] = set()
-        for port, record in self.record_dict.items():
-            if get_current_date_raw() - record.time > datetime.timedelta(seconds=RECORD_RESPONSE_TIME):
-                invalid_ports.add(port)
+        invalid_ports: Set[MessagePort] = {
+            port
+            for port, record in self.record_dict.items()
+            if get_current_date_raw() - record.time
+            > datetime.timedelta(seconds=RECORD_RESPONSE_TIME)
+        }
         for port in invalid_ports:
             del self.record_dict[port]
 
@@ -460,11 +464,11 @@ class QueryCommand(UserCommandBase):
 
     def get_state(self) -> str:
         feedback: str
-        if self.src_uuid_dict:
-            feedback = f"已加载{len(self.src_uuid_dict)}个资料库, {len(self.item_uuid_dict)}个查询条目"
-        else:
-            feedback = f"尚未加载任何资料库"
-        return feedback
+        return (
+            f"已加载{len(self.src_uuid_dict)}个资料库, {len(self.item_uuid_dict)}个查询条目"
+            if self.src_uuid_dict
+            else "尚未加载任何资料库"
+        )
 
 
 QUERY_UUID_SET: Set[int] = set()
@@ -486,7 +490,7 @@ def get_query_uuid() -> int:
 
 def get_tag_string(tags: Iterable[str]):
     """获得标签字符串, 输入["a", "b"], 返回"#a #b" """
-    return " ".join(["#" + tag for tag in tags])
+    return " ".join([f"#{tag}" for tag in tags])
 
 
 def get_syn_string(synonym: Iterable[str]):

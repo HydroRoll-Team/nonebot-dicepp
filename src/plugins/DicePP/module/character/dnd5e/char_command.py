@@ -78,7 +78,7 @@ class CharacterDNDCommand(UserCommandBase):
                 if "#" in check_name:
                     time_str, check_name = check_name.split("#")
                     time = int(time_str)
-                info = (time, check_name+"豁免", mod_str)
+                info = time, f"{check_name}豁免", mod_str
             elif re.match(r"\.([1-9]#)?..攻击", msg_str):
                 cmd_type = CMD_TYPE_ATTACK
                 msg_str = msg_str[1:]
@@ -87,7 +87,7 @@ class CharacterDNDCommand(UserCommandBase):
                 if "#" in check_name:
                     time_str, check_name = check_name.split("#")
                     time = int(time_str)
-                info = (time, check_name+"攻击", mod_str)
+                info = time, f"{check_name}攻击", mod_str
             elif re.match(r"\.([1-9][0-9]?#)?生命骰", msg_str):
                 cmd_type = CMD_TYPE_HP_DICE
                 msg_str = msg_str[1:]
@@ -176,19 +176,19 @@ class CharacterDNDCommand(UserCommandBase):
                     time = 1
                 try:
                     hint_str = ""
-                    for t in range(time):
+                    for _ in range(time):
                         hint_str, result_str, result_val = char_info.ability_info.perform_check(check_name, advantage, mod_str)
                         check_result_list.append(result_str)
                         check_value_list.append(result_val)
                     name_str = char_info.name
                     if not name_str:
                         name_str = self.bot.get_nickname(meta.user_id, meta.group_id)
-                    check_name = check_name + "检定" if time <= 1 else f"{time}次{check_name}检定"
+                    check_name = f"{check_name}检定" if time <= 1 else f"{time}次{check_name}检定"
                     result_str = "\n".join(check_result_list)
                     feedback = self.format_loc(LOC_CHECK_RES, name=name_str, check=check_name, hint=hint_str, result=result_str)
                 except AssertionError as e:
                     feedback = e.args[0]
-                if check_name == "先攻检定" and len(check_value_list) > 0:
+                if check_name == "先攻检定" and check_value_list:
                     try:
                         from module.initiative import InitiativeCommand
                         assert InitiativeCommand.__name__ in self.bot.command_dict, "未注册先攻指令"
