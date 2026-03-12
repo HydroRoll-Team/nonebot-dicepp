@@ -21,8 +21,7 @@ class InitEntity(JsonObject):
         self.init: int = 0  # 先攻数值
 
     def get_info(self) -> str:
-        info = f"{self.name} 先攻:{self.init}"
-        return info
+        return f"{self.name} 先攻:{self.init}"
 
     def __repr__(self):
         return f"InitEntity({self.name},{self.init},{self.owner if self.owner else None})"

@@ -68,14 +68,11 @@ class HPInfo(JsonObject):
                 self.hp_temp = 0
         # 生命值
         if self.is_alive:
-            if self.hp_cur > 0:
-                if self.hp_cur > value:
-                    self.hp_cur -= value
-                else:
-                    self.hp_cur = 0
-                    self.is_alive = False
-            else:  # self.hp_cur <= 0 hp_cur如果小于等于0且is_alive==True说明当前记录的是受损生命值
+            if self.hp_cur > 0 and self.hp_cur > value or self.hp_cur <= 0:
                 self.hp_cur -= value
+            else:
+                self.hp_cur = 0
+                self.is_alive = False
 
     def heal(self, value: int):
         if self.is_record_normal():
@@ -115,7 +112,7 @@ class HPInfo(JsonObject):
 
         roll_result_list = []
         roll_result_val = 0
-        for i in range(num):
+        for _ in range(num):
             try:
                 roll_result = exec_roll_exp(roll_exp)
             except RollDiceError as e:

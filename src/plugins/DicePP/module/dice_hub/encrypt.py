@@ -61,7 +61,7 @@ def create_rsa_key(name: str, path: str) -> Tuple[rsa.PublicKey, rsa.PrivateKey]
 
 
 def save_rsa_public_key(public_key: rsa.PublicKey, name: str, path: str) -> str:
-    public_path = os.path.join(path, name) + ".pub"
+    public_path = f"{os.path.join(path, name)}.pub"
     try:
         with open(public_path, "w") as f:
             f.write(save_rsa_public_key_as_str(public_key))
@@ -81,7 +81,7 @@ def save_rsa_private_key(private_key: rsa.PrivateKey, name: str, path: str) -> s
 
 
 def load_rsa_public_key(name: str, path: str) -> rsa.PublicKey:
-    public_path = os.path.join(path, name) + ".pub"
+    public_path = f"{os.path.join(path, name)}.pub"
     try:
         with open(public_path, "r") as f:
             key_str = f.read()

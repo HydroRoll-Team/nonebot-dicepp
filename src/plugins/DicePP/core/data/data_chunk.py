@@ -54,7 +54,7 @@ class DataChunkBase(metaclass=abc.ABCMeta):
             if isinstance(node, dict):
                 invalid_key = []
                 for key, value in node.items():
-                    if isinstance(value, dict) or isinstance(value, list):
+                    if isinstance(value, (dict, list)):
                         deserialize_json_object_in_node(value)
                     elif isinstance(value, str) and value.find(JSON_OBJECT_PREFIX) == 0:  # 反序列化JsonObject
                         try:
@@ -67,7 +67,7 @@ class DataChunkBase(metaclass=abc.ABCMeta):
             elif isinstance(node, list):
                 invalid_index = []
                 for index, value in enumerate(node):
-                    if isinstance(value, dict) or isinstance(value, list):
+                    if isinstance(value, (dict, list)):
                         deserialize_json_object_in_node(value)
                     elif isinstance(value, str) and value.find(JSON_OBJECT_PREFIX) == 0:  # 处理Json Object
                         try:
@@ -99,13 +99,13 @@ class DataChunkBase(metaclass=abc.ABCMeta):
         def serialize_json_object_in_node(node: Any) -> None:
             if isinstance(node, dict):
                 for key, value in node.items():
-                    if isinstance(value, dict) or isinstance(value, list):
+                    if isinstance(value, (dict, list)):
                         serialize_json_object_in_node(value)
                     elif isinstance(value, JsonObject):  # 处理Json Object
                         node[key] = value.to_json()
             elif isinstance(node, list):
                 for index, value in enumerate(node):
-                    if isinstance(value, dict) or isinstance(value, list):
+                    if isinstance(value, (dict, list)):
                         serialize_json_object_in_node(value)
                     elif isinstance(value, JsonObject):  # 处理Json Object
                         node[index] = value.to_json()
@@ -151,7 +151,7 @@ def custom_data_chunk(identifier: str,
             assert dc.identifier != identifier
         cls.identifier = identifier
         cls.include_json_object = include_json_object
-        cls.__name__ = "DataChunkClass" + identifier
+        cls.__name__ = f"DataChunkClass{identifier}"
         DATA_CHUNK_TYPES.append(cls)
         return cls
 

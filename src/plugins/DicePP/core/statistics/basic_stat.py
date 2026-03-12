@@ -56,9 +56,9 @@ class StatElementBase:
 
 class UserCommandStatInfo:
     def serialize(self) -> str:
-        flag_list = []
-        for flag, elem in self.flag_dict.items():
-            flag_list.append(f"{flag}|{elem.serialize()}")
+        flag_list = [
+            f"{flag}|{elem.serialize()}" for flag, elem in self.flag_dict.items()
+        ]
         return "&".join(flag_list)
 
     def deserialize(self, input_str: str) -> None:

@@ -16,4 +16,4 @@ ALL_LOCAL_DIR_PATH = [DATA_PATH, BOT_DATA_PATH, CONFIG_PATH, LOCAL_IMG_PATH]
 for dirPath in ALL_LOCAL_DIR_PATH:
     if not os.path.exists(dirPath):
         os.makedirs(dirPath)
-        dice_log("[Config] [Init] 创建文件夹: " + dirPath)
+        dice_log(f"[Config] [Init] 创建文件夹: {dirPath}")

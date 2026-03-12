@@ -28,9 +28,8 @@ class LocalizationText:
             file_path = Path(LOCAL_IMG_PATH) / key
             if file_path.exists():
                 return get_cq_image(file_path.read_bytes())
-            else:
-                dice_log(f"[LocalImage] 找不到图片 {file_path}")
-                return match.group(0)
+            dice_log(f"[LocalImage] 找不到图片 {file_path}")
+            return match.group(0)
 
         loc_text = random.choice(self.loc_texts) if self.loc_texts else ""
         loc_text = re.sub(r"IMG\((.{1,50}?\.[A-Za-z]{1,10}?)\)", replace_image_code, loc_text)

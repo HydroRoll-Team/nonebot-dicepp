@@ -49,9 +49,6 @@ class TemplateCommand(UserCommandBase):
         return [BotSendMsgCommand(self.bot.account, feedback, [port])]
 
     def get_help(self, keyword: str, meta: MessageMetaData) -> str:
-        if keyword == "TMP":  # help后的接着的内容
-            feedback: str = ""
-            return feedback
         return ""
 
     def get_description(self) -> str:

@@ -48,7 +48,7 @@ class BotMacro(JsonObject):
         self.raw = raw  # 定义宏时的字符串
         self.command_split = command_split
         # 解析定义字符串
-        if self.raw.find(" ") == -1:
+        if " " not in self.raw:
             raise ValueError("宏定义中缺少空格")
         key_args, target = self.raw.split(" ", 1)
         key_args: str = key_args.strip()

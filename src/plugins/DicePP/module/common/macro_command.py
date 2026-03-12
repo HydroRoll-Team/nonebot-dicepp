@@ -33,10 +33,14 @@ class MacroCommand(UserCommandBase):
                                          "未成功定义宏, error为失败原因")
         bot.loc_helper.register_loc_text(LOC_DEFINE_LIST, "Macro list:\n{macro_list}",
                                          f"查看当前宏列表, macro_list中的每一个元素由{LOC_DEFINE_INFO}定义")
-        bot.loc_helper.register_loc_text(LOC_DEFINE_INFO, "Keywords: {macro} Args: {args} -> {target}",
-                                         f"宏列表中每一个元素的信息, macro为宏, args为参数列表, target为目标字符串")
-        bot.loc_helper.register_loc_text(LOC_DEFINE_DEL, "Delete macro: {macro}",
-                                         f"删除宏, macro为宏关键字")
+        bot.loc_helper.register_loc_text(
+            LOC_DEFINE_INFO,
+            "Keywords: {macro} Args: {args} -> {target}",
+            "宏列表中每一个元素的信息, macro为宏, args为参数列表, target为目标字符串",
+        )
+        bot.loc_helper.register_loc_text(
+            LOC_DEFINE_DEL, "Delete macro: {macro}", "删除宏, macro为宏关键字"
+        )
 
         bot.cfg_helper.register_config(CFG_DEFINE_LEN_MAX, "300", "每个用户可以定义的宏的上限长度")
         bot.cfg_helper.register_config(CFG_DEFINE_NUM_MAX, "50", "每个用户可以定义的宏上限数量")
@@ -60,7 +64,8 @@ class MacroCommand(UserCommandBase):
 
         if not arg_str:
             def format_macro_info(i, macro):
-                return f"{i + 1}. " + self.format_loc(LOC_DEFINE_INFO, macro=macro.key, args=macro.args, target=macro.target)
+                return f"{i + 1}. {self.format_loc(LOC_DEFINE_INFO, macro=macro.key, args=macro.args, target=macro.target)}"
+
             macro_list_str = "\n".join((format_macro_info(i, macro) for i, macro in enumerate(macro_list)))
             feedback = self.format_loc(LOC_DEFINE_LIST, macro_list=macro_list_str)
         elif arg_str.startswith("del"):

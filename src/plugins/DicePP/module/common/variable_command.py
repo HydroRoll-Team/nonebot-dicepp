@@ -104,8 +104,7 @@ class VariableCommand(UserCommandBase):
                     bot_var.val = bot_var.val - var_val
                 self.bot.data_manager.set_data(DC_VARIABLE, [meta.user_id, meta.group_id, var_name], bot_var)
         elif cmd_type == "get":
-            var_name = arg_str
-            if var_name:
+            if var_name := arg_str:
                 if var_name not in cur_var_list:
                     feedback = self.format_loc(LOC_VAR_ERROR, error=f"{var_name}不存在, 当前可用变量: {list(cur_var_list)}")
                     return [BotSendMsgCommand(self.bot.account, feedback, [port])]
@@ -163,5 +162,5 @@ def assert_valid_variable_name(name: str):
     # 变量名中不能包含空格或换行
     if re.search(r"\s", name):
         raise ValueError("变量名中不能含有空格")
-    if name in ["all"]:
+    if name in {"all"}:
         raise ValueError("变量名为保留字")

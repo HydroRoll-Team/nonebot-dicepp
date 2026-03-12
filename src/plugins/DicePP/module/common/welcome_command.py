@@ -53,15 +53,14 @@ class WelcomeCommand(UserCommandBase):
         if not arg_str:
             self.bot.data_manager.set_data(DC_WELCOME, [meta.group_id], "")
             feedback = self.format_loc(LOC_WELCOME_RESET)
+        elif len(arg_str) > WELCOME_MAX_LENGTH:
+            feedback = self.format_loc(LOC_WELCOME_ILLEGAL, reason=f"欢迎词长度大于{WELCOME_MAX_LENGTH}")
+        elif arg_str == "default":
+            self.bot.data_manager.delete_data(DC_WELCOME, [meta.group_id])
+            feedback = self.format_loc(LOC_WELCOME_SET, word=self.format_loc(LOC_WELCOME_DEFAULT))
         else:
-            if len(arg_str) > WELCOME_MAX_LENGTH:
-                feedback = self.format_loc(LOC_WELCOME_ILLEGAL, reason=f"欢迎词长度大于{WELCOME_MAX_LENGTH}")
-            elif arg_str == "default":
-                self.bot.data_manager.delete_data(DC_WELCOME, [meta.group_id])
-                feedback = self.format_loc(LOC_WELCOME_SET, word=self.format_loc(LOC_WELCOME_DEFAULT))
-            else:
-                self.bot.data_manager.set_data(DC_WELCOME, [meta.group_id], arg_str)
-                feedback = self.format_loc(LOC_WELCOME_SET, word=arg_str)
+            self.bot.data_manager.set_data(DC_WELCOME, [meta.group_id], arg_str)
+            feedback = self.format_loc(LOC_WELCOME_SET, word=arg_str)
 
         return [BotSendMsgCommand(self.bot.account, feedback, [port])]
 

@@ -61,9 +61,17 @@ class UtilsDNDCommand(UserCommandBase):
 
         dnd_result = []
         for _ in range(times):
-            attr_result: List[int] = []
-            for _ in range(6):
-                attr_result.append(sum(list(sorted([random.randint(1, 6) for _ in range(4)], key=lambda x: -x))[:3]))
+            attr_result: List[int] = [
+                sum(
+                    list(
+                        sorted(
+                            [random.randint(1, 6) for _ in range(4)],
+                            key=lambda x: -x,
+                        )
+                    )[:3]
+                )
+                for _ in range(6)
+            ]
             attr_result_str = str(list(sorted(attr_result, key=lambda x: -x)))
             dnd_result.append(f"{attr_result_str} = {sum(attr_result)}")
         dnd_result = "\n".join(dnd_result)
@@ -74,10 +82,7 @@ class UtilsDNDCommand(UserCommandBase):
         return [BotSendMsgCommand(self.bot.account, feedback, [port])]
 
     def get_help(self, keyword: str, meta: MessageMetaData) -> str:
-        if keyword == "dnd":  # help后的接着的内容
-            feedback: str = ".dnd [次数] [原因] 相当于4D6K3"
-            return feedback
-        return ""
+        return ".dnd [次数] [原因] 相当于4D6K3" if keyword == "dnd" else ""
 
     def get_description(self) -> str:
         return ".dnd DND属性生成"  # help指令中返回的内容

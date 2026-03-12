@@ -82,7 +82,7 @@ class MyTestCase(IsolatedAsyncioTestCase):
         # user_id += f"_in_test{self.test_index}"
         meta = MessageMetaData(msg, msg, MessageSender(user_id, nickname), group_id, to_me)
         info_str = ""
-        for t in range(test_times):
+        for _ in range(test_times):
             bot_commands = await self.test_bot.process_message(msg, meta)
             result = "\n".join([str(command) for command in bot_commands])
             info_str = f"\033[0;32m{msg}\033[0m -> {result}"
@@ -97,7 +97,7 @@ class MyTestCase(IsolatedAsyncioTestCase):
         # user_id += f"_in_test{self.test_index}"
         meta = MessageMetaData(msg, msg, MessageSender(user_id, nickname), "", True)
         info_str = ""
-        for t in range(test_times):
+        for _ in range(test_times):
             bot_commands = await self.test_bot.process_message(msg, meta)
             result = "\n".join([str(command) for command in bot_commands])
             info_str = f"\033[0;32m{msg}\033[0m -> {result}"
@@ -109,7 +109,7 @@ class MyTestCase(IsolatedAsyncioTestCase):
                          is_show: bool = False, test_times=1):
         """Validate Notice Result"""
         info_str = ""
-        for t in range(test_times):
+        for _ in range(test_times):
             bot_commands = await self.test_bot.process_notice(notice)
             result = "\n".join([str(command) for command in bot_commands])
             info_str = f"\033[0;32m{notice}\033[0m -> {result}"
@@ -295,10 +295,11 @@ class MyTestCase(IsolatedAsyncioTestCase):
             condition_a, condition_b, condition_c = False, False, False
             sources = self.test_bot.command_dict["QueryCommand"].src_uuid_dict.values()
             for source in sources:
-                if "test.xlsx" in source.path and source.sheet == "test_sheet_A":
-                    condition_a = True
-                if "test.xlsx" in source.path and source.sheet == "test_sheet_B":
-                    condition_b = True
+                if "test.xlsx" in source.path:
+                    if source.sheet == "test_sheet_A":
+                        condition_a = True
+                    elif source.sheet == "test_sheet_B":
+                        condition_b = True
                 if "测试.xlsx" in source.path and source.sheet == "test_sheet_A":
                     condition_c = True
             assert condition_a and condition_b and condition_c

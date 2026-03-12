@@ -81,15 +81,17 @@ class RandomGeneratorCommand(UserCommandBase):
         arg_str: str = hint
         feedback: str = ""
         if not arg_str:  # 展示列表
-            gen_list: List[str] = []
-            for name, source in self.source_name_dict.items():
-                if source.is_visible:
-                    gen_list.append(name)
+            gen_list: List[str] = [
+                name
+                for name, source in self.source_name_dict.items()
+                if source.is_visible
+            ]
             feedback = self.format_loc(LOC_RAND_GEN_LIST, list=", ".join(gen_list))
         elif arg_str == "列表":  # 展示完整列表
-            gen_list: List[Tuple[str, str]] = []
-            for name, source in self.source_name_dict.items():
-                gen_list.append((name, source.global_path))
+            gen_list: List[Tuple[str, str]] = [
+                (name, source.global_path)
+                for name, source in self.source_name_dict.items()
+            ]
             result = ", ".join([info[0] for info in sorted(gen_list, key=lambda x: x[1])])
             feedback = self.format_loc(LOC_RAND_GEN_LIST, list=result)
         else:
@@ -183,8 +185,7 @@ class RandomGeneratorCommand(UserCommandBase):
         for name in wb.sheetnames:
             ws = wb[name]
             new_source = RandomDataSource("", meta_path.parent)
-            error = new_source.read_from_sheet(ws)
-            if error:
+            if error := new_source.read_from_sheet(ws):
                 error = f"读取{meta_path.relative_to(DATA_PATH)}/{name}时遇到错误: {error}"
                 error_info.append(error)
             else:
@@ -195,10 +196,11 @@ class RandomGeneratorCommand(UserCommandBase):
 
     def finalize_init(self, error_info: List[str]):
         """分析各个source之间的引用关系, 预读取需要的xlsx中的数据, 分析txt和图片等文件的路径"""
-        global_source_dict: Dict[str, RandomDataSource] = {}
-        for source in self.source_list:
-            if source.global_path:
-                global_source_dict[source.global_path] = source
+        global_source_dict: Dict[str, RandomDataSource] = {
+            source.global_path: source
+            for source in self.source_list
+            if source.global_path
+        }
         invalid_source = []
         first_time = True
         while invalid_source or first_time:
@@ -213,7 +215,6 @@ class RandomGeneratorCommand(UserCommandBase):
                 self.source_list.remove(source)
                 if source.global_path in global_source_dict:
                     del global_source_dict[source.global_path]
-        self.source_name_dict = {}
-        for source in self.source_list:
-            if source.name:
-                self.source_name_dict[source.name] = source
+        self.source_name_dict = {
+            source.name: source for source in self.source_list if source.name
+        }

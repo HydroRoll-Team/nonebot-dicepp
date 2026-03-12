@@ -133,7 +133,7 @@ class Bot:
                     for command in bot_commands:
                         await self.proxy.process_bot_command(command)
             except Exception:
-                bot_commands += self.handle_exception(f"Tick Loop: CODE113")
+                bot_commands += self.handle_exception("Tick Loop: CODE113")
 
             # 最多每秒执行一次循环
             free_time = max(loop_begin_time + 1 - loop.time(), 0)
@@ -169,7 +169,7 @@ class Bot:
                 try:
                     bot_commands += task.result()
                 except Exception:
-                    dice_log(str(self.handle_exception(f"Async Task: CODE114")[0]))
+                    dice_log(str(self.handle_exception("Async Task: CODE114")[0]))
                 del self.todo_tasks[task]
                 dice_log(f"[Async Task] Finish {task.get_coro().cr_code.co_name}")
             for task in pending_tasks:
@@ -183,7 +183,7 @@ class Bot:
                         task.cancel()
                         del self.todo_tasks[task]
         except Exception:
-            dice_log(str(self.handle_exception(f"Async Task: CODE112")[0]))
+            dice_log(str(self.handle_exception("Async Task: CODE112")[0]))
 
     async def tick_daily(self, bot_commands):
         # 更新用户统计
@@ -463,8 +463,7 @@ class Bot:
         exception_info = "\n".join(exception_info[-8:]) if len(exception_info) > 8 else "\n".join(exception_info)
         additional_info = f"\n{info}" if info else ""
         feedback = f"未处理的错误:\n{exception_info}{additional_info}"
-        master_list = self.cfg_helper.get_config(CFG_MASTER)
-        if master_list:
+        if master_list := self.cfg_helper.get_config(CFG_MASTER):
             return [BotSendMsgCommand(self.account, feedback, [PrivateMessagePort(master_list[0])])]
         else:
             return []
@@ -475,8 +474,7 @@ class Bot:
     async def send_msg_to_master(self, msg: str) -> None:
         """发送信息给主Master"""
         from core.command import BotSendMsgCommand
-        master_list = self.get_master_ids()
-        if master_list:
+        if master_list := self.get_master_ids():
             await self.proxy.process_bot_command(BotSendMsgCommand(self.account, msg, [PrivateMessagePort(master_list[0])]))
 
     def get_nickname(self, user_id: str, group_id: str = "") -> str:
@@ -520,7 +518,7 @@ class Bot:
             return []
         group_info_list: List[GroupInfo] = await self.proxy.get_group_list()
         all_group_id = set(self.data_manager.get_keys(DC_GROUP_DATA, []))
-        valid_group_id = set((info.group_id for info in group_info_list))
+        valid_group_id = {info.group_id for info in group_info_list}
         for info in group_info_list:
             group_stat: GroupStatInfo = self.data_manager.get_data(DC_GROUP_DATA, [info.group_id, DCK_GROUP_STAT],
                                                                    default_gen=GroupStatInfo, get_ref=True)
@@ -550,7 +548,7 @@ class Bot:
             group_expire_time = int(self.cfg_helper.get_config(CFG_GROUP_EXPIRE_WARNING)[0])
             group_expire_warn = self.loc_helper.format_loc_text(LOC_GROUP_EXPIRE_WARNING)
         except ValueError:
-            return self.handle_exception(f"自动清理信息")
+            return self.handle_exception("自动清理信息")
         if not is_data_expire:
             return []
         result_commands: List[BotCommandBase] = []
@@ -621,33 +619,50 @@ class Bot:
                 is_valid = True
                 group_stat.meta.warn_time += 1
                 if group_stat.meta.member_count > 0:  # 只对拥有群成员的群发送警告消息, 没有说明已经不在该群了
-                    result_commands.append(BotDelayCommand(self.account, seconds=random.random() * 10 + 2))
-                    result_commands.append(BotSendMsgCommand(self.account, group_expire_warn, [GroupMessagePort(group_id)]))
+                    result_commands.extend(
+                        (
+                            BotDelayCommand(
+                                self.account, seconds=random.random() * 10 + 2
+                            ),
+                            BotSendMsgCommand(
+                                self.account,
+                                group_expire_warn,
+                                [GroupMessagePort(group_id)],
+                            ),
+                        )
+                    )
                     warning_group_id.append(group_id)
             if not is_valid:
                 invalid_group_id.append(group_id)
             index += 1
             if index % 500 == 0:
                 await asyncio.sleep(0)
+        temp_warning = "[测试] 该群聊被标记为无效群聊, 尝试使用掷骰指令以清除此标记和提醒"
         for group_id in invalid_group_id:
-            result_commands.append(BotDelayCommand(self.account, seconds=random.random() * 10 + 2))
-            temp_warning = "[测试] 该群聊被标记为无效群聊, 尝试使用掷骰指令以清除此标记和提醒"
-            result_commands.append(BotSendMsgCommand(self.account, temp_warning, [GroupMessagePort(group_id)]))
-            # result_commands.append(BotLeaveGroupCommand(self.account, group_id))
-            # self.data_manager.delete_data(DC_GROUP_DATA, [group_id])
-            # self.data_manager.delete_data(DC_WELCOME, [group_id])
-            # self.data_manager.delete_data(DC_ACTIVATE, [group_id])
-            # self.data_manager.delete_data(DC_CHAR_DND, [group_id])
-            # self.data_manager.delete_data(DC_CHAR_HP, [group_id])
-            # self.data_manager.delete_data(DC_INIT, [group_id])
+            result_commands.extend(
+                (
+                    BotDelayCommand(
+                        self.account, seconds=random.random() * 10 + 2
+                    ),
+                    BotSendMsgCommand(
+                        self.account, temp_warning, [GroupMessagePort(group_id)]
+                    ),
+                )
+            )
+                # result_commands.append(BotLeaveGroupCommand(self.account, group_id))
+                # self.data_manager.delete_data(DC_GROUP_DATA, [group_id])
+                # self.data_manager.delete_data(DC_WELCOME, [group_id])
+                # self.data_manager.delete_data(DC_ACTIVATE, [group_id])
+                # self.data_manager.delete_data(DC_CHAR_DND, [group_id])
+                # self.data_manager.delete_data(DC_CHAR_HP, [group_id])
+                # self.data_manager.delete_data(DC_INIT, [group_id])
 
         # 给Master汇报清理情况
         if self.get_master_ids():
             master_id = self.get_master_ids()[0]
             result_commands.append(BotDelayCommand(self.account, seconds=random.random() * 10 + 2))
             feedback = f"检查{len(all_user_id)}个用户数据, {len(all_group_id)}个群聊数据.\n" \
-                       f"清理{len(invalid_user_id)}个失效用户, {len(invalid_group_id)}个失效群聊({invalid_group_id}).\n" \
-                       f"对{len(warning_group_id)}个即将失效的群聊发送提示消息."
+                           f"清理{len(invalid_user_id)}个失效用户, {len(invalid_group_id)}个失效群聊({invalid_group_id}).\n" \
+                           f"对{len(warning_group_id)}个即将失效的群聊发送提示消息."
             result_commands.append(BotSendMsgCommand(self.account, feedback, [PrivateMessagePort(master_id)]))
-        result_commands = list(reversed(result_commands))
-        return result_commands
+        return list(reversed(result_commands))

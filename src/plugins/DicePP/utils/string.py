@@ -19,8 +19,7 @@ def to_english_str(input_str: str) -> str:
     output_str = output_str.replace('：', ':')
     output_str = output_str.replace('；', ';')
     output_str = output_str.replace('（', '(')
-    output_str = output_str.replace('）', ')')
-    return output_str
+    return output_str.replace('）', ')')
 
 
 def match_substring(substring: str, str_list: Iterable[str]) -> List[str]:

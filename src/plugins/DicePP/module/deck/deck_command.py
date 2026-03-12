@@ -318,11 +318,9 @@ class DeckCommand(UserCommandBase):
         return [BotSendMsgCommand(self.bot.account, feedback, [port])]
 
     def get_help(self, keyword: str, meta: MessageMetaData) -> str:
-        if keyword == "draw":  # help后的接着的内容
-            feedback: str = ".draw [次数#, 可选][牌库名]" \
-                            "示例: .draw 4#万象无常牌"
-            return feedback
-        return ""
+        return (
+            ".draw [次数#, 可选][牌库名]" "示例: .draw 4#万象无常牌" if keyword == "draw" else ""
+        )
 
     def get_description(self) -> str:
         return ".draw 抽卡指令"  # help指令中返回的内容
@@ -354,15 +352,15 @@ class DeckCommand(UserCommandBase):
                     redraw = sheet_data[DECK_ITEM_FIELD_REDRAW][item_index]
                     try:
                         redraw = int(redraw)
-                        assert redraw in (0, 1)
+                        assert redraw in {0, 1}
                     except (TypeError, ValueError, AssertionError):
                         redraw = 1
-                    redraw = True if redraw == 1 else False
+                    redraw = redraw == 1
 
                     final = sheet_data[DECK_ITEM_FIELD_FINAL][item_index]
                     try:
                         final = int(final)
-                        assert final in (0, 1, 2)
+                        assert final in {0, 1, 2}
                     except (TypeError, ValueError, AssertionError):
                         final = 0
 
@@ -403,8 +401,8 @@ class DeckCommand(UserCommandBase):
 
     def get_state(self) -> str:
         feedback: str
-        if self.deck_dict:
-            feedback = f"已加载{len(self.deck_dict)}个牌库: {[deck.name for deck in self.deck_dict.values()]}"
-        else:
-            feedback = f"尚未加载任何牌库"
-        return feedback
+        return (
+            f"已加载{len(self.deck_dict)}个牌库: {[deck.name for deck in self.deck_dict.values()]}"
+            if self.deck_dict
+            else "尚未加载任何牌库"
+        )

@@ -21,26 +21,21 @@ class RollResult:
         """
         inter_info = self.get_info()
         final_res = str(self.get_val())
-        if inter_info == final_res:
-            return final_res
-        else:
-            return f"{inter_info}={final_res}"
+        return final_res if inter_info == final_res else f"{inter_info}={final_res}"
 
     def get_info(self) -> str:
         """
         获得形如 (1+1)*2 的中间变量
         """
         final_info = self.info if self.info[0] != "+" else self.info[1:]
-        final_info = remove_redundant_parentheses(final_info)
-        return final_info
+        return remove_redundant_parentheses(final_info)
 
     def get_exp(self) -> str:
         """
         获得形如D20+1的掷骰表达式
         """
         final_exp = self.exp if self.exp[0] != "+" else self.exp[1:]
-        final_exp = remove_redundant_parentheses(final_exp, readable=False)
-        return final_exp
+        return remove_redundant_parentheses(final_exp, readable=False)
 
     def get_val(self) -> int:
         """
@@ -66,7 +61,4 @@ class RollResult:
         exp = self.get_exp()
         val = str(self.get_val())
 
-        if exp != val:
-            return f"{exp}={val}"
-        else:
-            return val
+        return f"{exp}={val}" if exp != val else val
